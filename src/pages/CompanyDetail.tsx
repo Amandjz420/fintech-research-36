@@ -5,6 +5,7 @@ import { GroupedEntriesResponse, CompanyQuarterlyData, Company, apiService } fro
 import YearAccordion from '../components/YearAccordion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
+import ProductOfferingsDisplay from '../components/ProductOfferingsDisplay';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
@@ -211,12 +212,12 @@ const CompanyDetail = () => {
                         </Badge>
                       </div>
 
-                      {company.regional_presence?.primary_markets && company.regional_presence.primary_markets.length > 0 && (
+                      {(company.regional_presence?.countries || company.regional_presence?.primary_markets) && (
                         <div>
                           <h4 className="font-semibold mb-2">Regional Presence</h4>
                           <div className="flex flex-wrap gap-1">
-                            {company.regional_presence.primary_markets.map((market, index) => (
-                              <Badge key={index} variant="outline">{market}</Badge>
+                            {(company.regional_presence.countries || company.regional_presence.primary_markets || []).map((region, index) => (
+                              <Badge key={index} variant="outline">{region}</Badge>
                             ))}
                           </div>
                         </div>
@@ -473,43 +474,5 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
   </Card>
 );
 
-interface ProductOfferingsDisplayProps {
-  offerings: Record<string, string[]>;
-}
-
-const ProductOfferingsDisplay: React.FC<ProductOfferingsDisplayProps> = ({ offerings }) => (
-  <div className="space-y-8">
-    {Object.entries(offerings).map(([category, products]) => (
-      <div key={category} className="space-y-4">
-        <div className="flex items-center gap-3 pb-2 border-b border-border">
-          <Package className="h-5 w-5 text-primary" />
-          <h4 className="font-bold text-xl text-foreground capitalize">
-            {category.replace(/_/g, ' ')}
-          </h4>
-          <Badge variant="secondary" className="ml-auto">
-            {products.length} {products.length === 1 ? 'service' : 'services'}
-          </Badge>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((product, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow border-l-4 border-l-primary/40 hover:border-l-primary">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                  <div>
-                    <h5 className="font-semibold text-base text-foreground leading-tight">
-                      {product}
-                    </h5>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    ))}
-  </div>
-);
 
 export default CompanyDetail;

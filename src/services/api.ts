@@ -1,5 +1,13 @@
 const API_BASE_URL = 'http://localhost:8000';
 
+export interface ProductOffering {
+  name: string;
+  features: string[];
+  platform: string;
+  description: string;
+  target_market: string;
+}
+
 export interface Company {
   id: number;
   name: string;
@@ -13,12 +21,15 @@ export interface Company {
     employee_count?: string;
   };
   extra_info: string;
-  product_offerings?: Record<string, string[]>;
+  product_offerings?: Record<string, ProductOffering[]>;
   regional_presence?: {
     primary_markets?: string[];
     served_cities?: string[];
     expansion_plans?: string[];
     licensing?: Record<string, string>;
+    countries?: string[];
+    major_cities?: string[];
+    states_or_provinces?: string[];
   };
   created_at: string;
   updated_at: string;
