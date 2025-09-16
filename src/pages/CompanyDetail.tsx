@@ -215,14 +215,25 @@ const CompanyDetail = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate('/')}
-            className="mb-6 inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors"
           >
             <ArrowLeft size={20} className="mr-2" />
             Back to Companies
           </button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate(`/comparison?companyId=${companyId}`)}
+            className="flex items-center gap-2"
+          >
+            Compare Analysis
+          </Button>
+        </div>
           <ErrorMessage message={error} onRetry={fetchData} />
         </div>
       </div>

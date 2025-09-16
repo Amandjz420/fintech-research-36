@@ -9,6 +9,7 @@ import CompanyDetail from "./pages/CompanyDetail";
 import ProjectsOverview from "./pages/ProjectsOverview";
 import ProjectDetail from "./pages/ProjectDetail";
 import SnapshotDetail from "./pages/SnapshotDetail";
+import ComparisonPage from "./pages/ComparisonPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/projects" element={<ProjectsOverview />} />
           <Route path="/projects/:projectId" element={<ProjectDetail />} />
           <Route path="/snapshots/:snapshotId" element={<SnapshotDetail />} />
+          <Route path="/comparison" element={<ComparisonPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

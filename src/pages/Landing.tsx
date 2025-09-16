@@ -62,13 +62,23 @@ const Landing = () => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
             Explore detailed analytics and insights for companies in our database
           </p>
-          <Button 
-            onClick={() => navigate('/projects')}
-            className="flex items-center gap-2 mx-auto"
-          >
-            <BarChart3 className="h-4 w-4" />
-            View Wayback Analysis Projects
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              onClick={() => navigate('/projects')}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              View Wayback Analysis Projects
+            </Button>
+            <Button 
+              onClick={() => navigate('/comparison')} 
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Compare Analysis
+            </Button>
+          </div>
         </div>
 
         {companies.length === 0 ? (
