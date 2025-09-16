@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { GroupedEntriesResponse, CompanyQuarterlyData, Company, apiService } from '../services/api';
 import YearAccordion from '../components/YearAccordion';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -83,6 +84,122 @@ const CompanyDetail = () => {
   const handleCitationToggle = (checked: boolean) => {
     console.log('Toggle changed to:', checked);
     setIncludeCitations(checked);
+  };
+
+  const downloadCompanyQuarterlyPDF = (data: CompanyQuarterlyData[], companyName: string, year: number, quarter: string) => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const usableWidth = pageWidth - 2 * margin;
+
+    data.forEach((item, index) => {
+      if (index > 0) pdf.addPage();
+      
+      let yPosition = margin;
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${companyName} - ${year} ${quarter} Analysis`, margin, yPosition);
+      yPosition += 15;
+      
+      // Information
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      if (item.information) {
+        const infoLines = pdf.splitTextToSize(item.information, usableWidth);
+        pdf.text(infoLines, margin, yPosition);
+        yPosition += infoLines.length * 6 + 10;
+      }
+      
+      // Business Model
+      if (item.extra_info.business_model && item.extra_info.business_model.length > 0) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Business Model:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        item.extra_info.business_model.forEach(businessItem => {
+          const lines = pdf.splitTextToSize(`• ${businessItem.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Products
+      if (item.extra_info.products && item.extra_info.products.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Products:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        item.extra_info.products.forEach(product => {
+          const lines = pdf.splitTextToSize(`• ${product.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Processes
+      if (item.extra_info.processes && item.extra_info.processes.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Processes:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        item.extra_info.processes.forEach(process => {
+          const lines = pdf.splitTextToSize(`• ${process.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Regions
+      if (item.extra_info.regions && item.extra_info.regions.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Regions:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        item.extra_info.regions.forEach(region => {
+          const lines = pdf.splitTextToSize(`• ${region.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Other
+      if (item.extra_info.other && item.extra_info.other.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Other Information:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        item.extra_info.other.forEach(otherItem => {
+          const lines = pdf.splitTextToSize(`• ${otherItem.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+      }
+    });
+    
+    pdf.save(`${companyName}_${year}_${quarter}_Analysis.pdf`);
   };
 
   if (loading) {
@@ -286,9 +403,22 @@ const CompanyDetail = () => {
         {/* Quarterly Data Display */}
         {selectedYear && selectedQuarter && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">
-              Analysis for {selectedYear} {selectedQuarter}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">
+                Analysis for {selectedYear} {selectedQuarter}
+              </h2>
+              {quarterlyData.length > 0 && (
+                <Button
+                  onClick={() => downloadCompanyQuarterlyPDF(quarterlyData, data.company_name, selectedYear, selectedQuarter)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </Button>
+              )}
+            </div>
             {quarterlyData.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">

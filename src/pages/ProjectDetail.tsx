@@ -8,7 +8,8 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import ProductOfferingsDisplay from '@/components/ProductOfferingsDisplay';
 import { Project, Snapshot, QuarterlyAnalysis, Company, apiService } from '@/services/api';
-import { ArrowLeft, ExternalLink, Calendar, FileText, BarChart3, Package } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, FileText, BarChart3, Package, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
 
 const ProjectDetail: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -113,6 +114,122 @@ const ProjectDetail: React.FC = () => {
   if (!project) return <ErrorMessage message="Project not found" />;
 
   const availableYears = Object.keys(groupedSnapshots).map(Number).sort((a, b) => b - a);
+
+  const downloadQuarterlyAnalysisPDF = (analyses: QuarterlyAnalysis[], projectName: string, year: number, quarter: string) => {
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 20;
+    const usableWidth = pageWidth - 2 * margin;
+
+    analyses.forEach((analysis, index) => {
+      if (index > 0) pdf.addPage();
+      
+      let yPosition = margin;
+      
+      // Title
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${projectName} - ${year} ${quarter} Analysis`, margin, yPosition);
+      yPosition += 15;
+      
+      // Information
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      if (analysis.information) {
+        const infoLines = pdf.splitTextToSize(analysis.information, usableWidth);
+        pdf.text(infoLines, margin, yPosition);
+        yPosition += infoLines.length * 6 + 10;
+      }
+      
+      // Business Model
+      if (analysis.business_model && analysis.business_model.length > 0) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Business Model:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        analysis.business_model.forEach(item => {
+          const lines = pdf.splitTextToSize(`• ${item.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Products
+      if (analysis.products && analysis.products.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Products:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        analysis.products.forEach(item => {
+          const lines = pdf.splitTextToSize(`• ${item.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Processes
+      if (analysis.processes && analysis.processes.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Processes:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        analysis.processes.forEach(item => {
+          const lines = pdf.splitTextToSize(`• ${item.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Regions
+      if (analysis.regions && analysis.regions.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Regions:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        analysis.regions.forEach(item => {
+          const lines = pdf.splitTextToSize(`• ${item.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+        yPosition += 5;
+      }
+      
+      // Other
+      if (analysis.other && analysis.other.length > 0) {
+        if (yPosition > pageHeight - 40) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Other Information:', margin, yPosition);
+        yPosition += 8;
+        pdf.setFont('helvetica', 'normal');
+        analysis.other.forEach(item => {
+          const lines = pdf.splitTextToSize(`• ${item.content}`, usableWidth - 10);
+          pdf.text(lines, margin + 5, yPosition);
+          yPosition += lines.length * 6 + 2;
+        });
+      }
+    });
+    
+    pdf.save(`${projectName}_${year}_${quarter}_Analysis.pdf`);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -281,9 +398,22 @@ const ProjectDetail: React.FC = () => {
       {/* Quarterly Analysis Display */}
       {selectedYear && selectedQuarter && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">
-            Analysis for {selectedYear} {selectedQuarter}
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">
+              Analysis for {selectedYear} {selectedQuarter}
+            </h2>
+            {quarterlyAnalysis.length > 0 && (
+              <Button
+                onClick={() => downloadQuarterlyAnalysisPDF(quarterlyAnalysis, project.name, selectedYear, selectedQuarter)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download PDF
+              </Button>
+            )}
+          </div>
           {quarterlyAnalysis.length === 0 ? (
             <Card>
               <CardContent className="pt-6">
