@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download, GitCompare } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { GroupedEntriesResponse, CompanyQuarterlyData, Company, apiService } from '../services/api';
 import YearAccordion from '../components/YearAccordion';
@@ -350,6 +350,17 @@ const CompanyDetail = () => {
                           </div>
                         </div>
                       )}
+                    </div>
+                    
+                    <div className="pt-4 border-t">
+                      <Button 
+                        onClick={() => navigate(`/comparison?companyId=${company.id}`)}
+                        variant="outline"
+                        className="w-full flex items-center gap-2"
+                      >
+                        <GitCompare className="h-4 w-4" />
+                        Compare Company vs Project Analysis
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>

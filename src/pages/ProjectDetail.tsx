@@ -8,7 +8,7 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import ProductOfferingsDisplay from '@/components/ProductOfferingsDisplay';
 import { Project, Snapshot, QuarterlyAnalysis, Company, apiService } from '@/services/api';
-import { ArrowLeft, ExternalLink, Calendar, FileText, BarChart3, Package, Download } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, FileText, BarChart3, Package, Download, GitCompare } from 'lucide-react';
 import jsPDF from 'jspdf';
 
 const ProjectDetail: React.FC = () => {
@@ -343,6 +343,17 @@ const ProjectDetail: React.FC = () => {
                         <Badge variant="outline">{company.metadata.employee_count}</Badge>
                       </div>
                     )}
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <Button 
+                      onClick={() => navigate(`/comparison?companyId=${company.id}`)}
+                      variant="outline"
+                      className="w-full flex items-center gap-2"
+                    >
+                      <GitCompare className="h-4 w-4" />
+                      Compare Company vs Project Analysis
+                    </Button>
                   </div>
                 </div>
               </TabsContent>
