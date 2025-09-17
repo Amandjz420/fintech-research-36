@@ -25,6 +25,7 @@ const ComparisonPage = () => {
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [companyQuarterlyData, setCompanyQuarterlyData] = useState<CompanyQuarterlyData[]>([]);
   const [projectQuarterlyData, setProjectQuarterlyData] = useState<QuarterlyAnalysis[]>([]);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,7 @@ const ComparisonPage = () => {
       if (!selectedCompanyId) {
         setCompany(null);
         setProject(null);
+        setAvailableYears([]);
         return;
       }
 
@@ -64,6 +66,14 @@ const ComparisonPage = () => {
         
         setCompany(companyData);
         setProject(projectData);
+        
+        // Generate available years from project snapshots and current year
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let year = currentYear; year >= 2020; year--) {
+          years.push(year);
+        }
+        setAvailableYears(years);
         
         // Update URL
         setSearchParams({ companyId: selectedCompanyId.toString() });
@@ -88,10 +98,15 @@ const ComparisonPage = () => {
       }
       
       try {
+        console.log(`Loading quarterly data for company ${selectedCompanyId}, year ${selectedYear}, quarter ${selectedQuarter}`);
+        
         const [companyData, projectData] = await Promise.all([
           apiService.getCompanyQuarterlyData(selectedCompanyId, selectedYear, selectedQuarter),
           apiService.getQuarterlyAnalysis(selectedCompanyId, selectedYear, selectedQuarter)
         ]);
+        
+        console.log('Company quarterly data:', companyData);
+        console.log('Project quarterly data:', projectData);
         
         setCompanyQuarterlyData(companyData);
         setProjectQuarterlyData(projectData);
@@ -349,8 +364,8 @@ const ComparisonPage = () => {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-md font-medium mb-2">Select Year</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {[2024, 2023, 2022].map(year => (
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                    {availableYears.map(year => (
                       <Button 
                         key={year}
                         variant={selectedYear === year ? "default" : "outline"}
