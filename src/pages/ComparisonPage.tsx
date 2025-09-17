@@ -108,59 +108,82 @@ const ComparisonPage = () => {
   const downloadComparisonPDF = () => {
     if (!company || !project || !selectedYear || !selectedQuarter) return;
     
-    const pdf = new jsPDF();
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const margin = 20;
-    const usableWidth = pageWidth - 2 * margin;
-    
-    let yPosition = margin;
-    
-    // Title
-    pdf.setFontSize(16);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`Comparison: ${company.name} - ${selectedYear} ${selectedQuarter}`, margin, yPosition);
-    yPosition += 20;
-    
-    // Company Analysis
-    if (companyQuarterlyData.length > 0) {
-      pdf.setFontSize(14);
+    try {
+      const pdf = new jsPDF();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 20;
+      const usableWidth = pageWidth - 2 * margin;
+      
+      let yPosition = margin;
+      
+      // Title
+      pdf.setFontSize(16);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Company Analysis:', margin, yPosition);
+      pdf.text(`Comparison: ${company.name} - ${selectedYear} ${selectedQuarter}`, margin, yPosition);
+      yPosition += 20;
+      
+      // Company Analysis
+      if (companyQuarterlyData.length > 0) {
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Company Analysis:', margin, yPosition);
+        yPosition += 10;
+        
+        companyQuarterlyData.forEach(data => {
+          // Add company analysis content
+          if (data.information) {
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            const infoLines = pdf.splitTextToSize(data.information, usableWidth);
+            pdf.text(infoLines, margin, yPosition);
+            yPosition += infoLines.length * 4 + 5;
+            
+            // Check if we need a new page
+            if (yPosition > pdf.internal.pageSize.getHeight() - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+          }
+        });
+      }
+      
       yPosition += 10;
       
-      companyQuarterlyData.forEach(data => {
-        // Add company analysis content
-        if (data.information) {
-          pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'normal');
-          const infoLines = pdf.splitTextToSize(data.information, usableWidth);
-          pdf.text(infoLines, margin, yPosition);
-          yPosition += infoLines.length * 4 + 5;
+      // Project Analysis
+      if (projectQuarterlyData.length > 0) {
+        // Check if we need a new page
+        if (yPosition > pdf.internal.pageSize.getHeight() - 50) {
+          pdf.addPage();
+          yPosition = margin;
         }
-      });
-    }
-    
-    yPosition += 10;
-    
-    // Project Analysis
-    if (projectQuarterlyData.length > 0) {
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Project Analysis:', margin, yPosition);
-      yPosition += 10;
+        
+        pdf.setFontSize(14);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Project Analysis:', margin, yPosition);
+        yPosition += 10;
+        
+        projectQuarterlyData.forEach(analysis => {
+          if (analysis.information) {
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            const infoLines = pdf.splitTextToSize(analysis.information, usableWidth);
+            pdf.text(infoLines, margin, yPosition);
+            yPosition += infoLines.length * 4 + 5;
+            
+            // Check if we need a new page
+            if (yPosition > pdf.internal.pageSize.getHeight() - margin) {
+              pdf.addPage();
+              yPosition = margin;
+            }
+          }
+        });
+      }
       
-      projectQuarterlyData.forEach(analysis => {
-        if (analysis.information) {
-          pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'normal');
-          const infoLines = pdf.splitTextToSize(analysis.information, usableWidth);
-          pdf.text(infoLines, margin, yPosition);
-          yPosition += infoLines.length * 4 + 5;
-        }
-      });
+      pdf.save(`${company.name}_Comparison_${selectedYear}_${selectedQuarter}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     }
-    
-    pdf.save(`${company.name}_Comparison_${selectedYear}_${selectedQuarter}.pdf`);
   };
 
   if (loading && companies.length === 0) {
@@ -403,7 +426,7 @@ const ComparisonPage = () => {
                             <div key={data.id} className="space-y-3">
                               <p className="text-sm leading-relaxed">{data.information}</p>
                               
-                              {/* Show key sections */}
+                              {/* Show all available categories */}
                               {data.extra_info.business_model && data.extra_info.business_model.length > 0 && (
                                 <div>
                                   <h5 className="font-medium text-primary mb-2">Business Model</h5>
@@ -423,6 +446,48 @@ const ComparisonPage = () => {
                                   <h5 className="font-medium text-primary mb-2">Products</h5>
                                   <ul className="space-y-1">
                                     {data.extra_info.products.slice(0, 3).map((item, index) => (
+                                      <li key={index} className="text-xs flex items-start gap-2">
+                                        <span className="text-primary">•</span>
+                                        <span className="flex-1">{item.content}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {data.extra_info.processes && data.extra_info.processes.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-primary mb-2">Processes</h5>
+                                  <ul className="space-y-1">
+                                    {data.extra_info.processes.slice(0, 3).map((item, index) => (
+                                      <li key={index} className="text-xs flex items-start gap-2">
+                                        <span className="text-primary">•</span>
+                                        <span className="flex-1">{item.content}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {data.extra_info.regions && data.extra_info.regions.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-primary mb-2">Regions</h5>
+                                  <ul className="space-y-1">
+                                    {data.extra_info.regions.slice(0, 3).map((item, index) => (
+                                      <li key={index} className="text-xs flex items-start gap-2">
+                                        <span className="text-primary">•</span>
+                                        <span className="flex-1">{item.content}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {data.extra_info.other && data.extra_info.other.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-primary mb-2">Other</h5>
+                                  <ul className="space-y-1">
+                                    {data.extra_info.other.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
                                         <span className="text-primary">•</span>
                                         <span className="flex-1">{item.content}</span>
@@ -459,7 +524,7 @@ const ComparisonPage = () => {
                             <div key={analysis.id} className="space-y-3">
                               <p className="text-sm leading-relaxed">{analysis.information}</p>
                               
-                              {/* Show key sections */}
+                              {/* Show all available categories */}
                               {analysis.business_model && analysis.business_model.length > 0 && (
                                 <div>
                                   <h5 className="font-medium text-primary mb-2">Business Model</h5>
@@ -479,6 +544,48 @@ const ComparisonPage = () => {
                                   <h5 className="font-medium text-primary mb-2">Products</h5>
                                   <ul className="space-y-1">
                                     {analysis.products.slice(0, 3).map((item, index) => (
+                                      <li key={index} className="text-xs flex items-start gap-2">
+                                        <span className="text-primary">•</span>
+                                        <span className="flex-1">{item.content}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {analysis.processes && analysis.processes.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-primary mb-2">Processes</h5>
+                                  <ul className="space-y-1">
+                                    {analysis.processes.slice(0, 3).map((item, index) => (
+                                      <li key={index} className="text-xs flex items-start gap-2">
+                                        <span className="text-primary">•</span>
+                                        <span className="flex-1">{item.content}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {analysis.regions && analysis.regions.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-primary mb-2">Regions</h5>
+                                  <ul className="space-y-1">
+                                    {analysis.regions.slice(0, 3).map((item, index) => (
+                                      <li key={index} className="text-xs flex items-start gap-2">
+                                        <span className="text-primary">•</span>
+                                        <span className="flex-1">{item.content}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {analysis.other && analysis.other.length > 0 && (
+                                <div>
+                                  <h5 className="font-medium text-primary mb-2">Other</h5>
+                                  <ul className="space-y-1">
+                                    {analysis.other.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
                                         <span className="text-primary">•</span>
                                         <span className="flex-1">{item.content}</span>
