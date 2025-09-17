@@ -561,9 +561,9 @@ const QuarterlyAnalysisCard: React.FC<QuarterlyAnalysisCardProps> = ({ analysis 
     <CardContent>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Business Model */}
-        {analysis.business_model && analysis.business_model.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Business Model</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Business Model</h4>
+          {analysis.business_model && analysis.business_model.length > 0 ? (
             <div className="space-y-3">
               {analysis.business_model.map((item, index) => (
                 <div key={index} className="text-sm">
@@ -580,13 +580,15 @@ const QuarterlyAnalysisCard: React.FC<QuarterlyAnalysisCardProps> = ({ analysis 
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Products */}
-        {analysis.products && analysis.products.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Products</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Products</h4>
+          {analysis.products && analysis.products.length > 0 ? (
             <div className="space-y-3">
               {analysis.products.map((item, index) => (
                 <div key={index} className="text-sm">
@@ -603,13 +605,15 @@ const QuarterlyAnalysisCard: React.FC<QuarterlyAnalysisCardProps> = ({ analysis 
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Processes */}
-        {analysis.processes && analysis.processes.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Processes</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Processes</h4>
+          {analysis.processes && analysis.processes.length > 0 ? (
             <div className="space-y-3">
               {analysis.processes.map((item, index) => (
                 <div key={index} className="text-sm">
@@ -626,13 +630,15 @@ const QuarterlyAnalysisCard: React.FC<QuarterlyAnalysisCardProps> = ({ analysis 
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Regions */}
-        {analysis.regions && analysis.regions.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Regions</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Regions</h4>
+          {analysis.regions && analysis.regions.length > 0 ? (
             <div className="space-y-3">
               {analysis.regions.map((item, index) => (
                 <div key={index} className="text-sm">
@@ -649,13 +655,15 @@ const QuarterlyAnalysisCard: React.FC<QuarterlyAnalysisCardProps> = ({ analysis 
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Other */}
-        {analysis.other && analysis.other.length > 0 && (
-          <div className="md:col-span-2">
-            <h4 className="font-semibold mb-3 text-primary">Other</h4>
+        <div className="md:col-span-2">
+          <h4 className="font-semibold mb-3 text-primary">Other</h4>
+          {analysis.other && analysis.other.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {analysis.other.map((item, index) => (
                 <div key={index} className="text-sm">
@@ -672,8 +680,10 @@ const QuarterlyAnalysisCard: React.FC<QuarterlyAnalysisCardProps> = ({ analysis 
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
       </div>
     </CardContent>
   </Card>

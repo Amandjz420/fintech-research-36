@@ -426,10 +426,10 @@ const ComparisonPage = () => {
                             <div key={data.id} className="space-y-3">
                               <p className="text-sm leading-relaxed">{data.information}</p>
                               
-                              {/* Show all available categories */}
-                              {data.extra_info.business_model && data.extra_info.business_model.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Business Model</h5>
+                              {/* Show all categories, even if empty */}
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Business Model</h5>
+                                {data.extra_info.business_model && data.extra_info.business_model.length > 0 ? (
                                   <ul className="space-y-1">
                                     {data.extra_info.business_model.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -438,12 +438,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
                               
-                              {data.extra_info.products && data.extra_info.products.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Products</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Products</h5>
+                                {data.extra_info.products && data.extra_info.products.length > 0 ? (
                                   <ul className="space-y-1">
                                     {data.extra_info.products.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -452,12 +454,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
 
-                              {data.extra_info.processes && data.extra_info.processes.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Processes</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Processes</h5>
+                                {data.extra_info.processes && data.extra_info.processes.length > 0 ? (
                                   <ul className="space-y-1">
                                     {data.extra_info.processes.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -466,12 +470,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
 
-                              {data.extra_info.regions && data.extra_info.regions.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Regions</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Regions</h5>
+                                {data.extra_info.regions && data.extra_info.regions.length > 0 ? (
                                   <ul className="space-y-1">
                                     {data.extra_info.regions.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -480,12 +486,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
 
-                              {data.extra_info.other && data.extra_info.other.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Other</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Other</h5>
+                                {data.extra_info.other && data.extra_info.other.length > 0 ? (
                                   <ul className="space-y-1">
                                     {data.extra_info.other.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -494,8 +502,10 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -524,10 +534,10 @@ const ComparisonPage = () => {
                             <div key={analysis.id} className="space-y-3">
                               <p className="text-sm leading-relaxed">{analysis.information}</p>
                               
-                              {/* Show all available categories */}
-                              {analysis.business_model && analysis.business_model.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Business Model</h5>
+                              {/* Show all categories, even if empty */}
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Business Model</h5>
+                                {analysis.business_model && analysis.business_model.length > 0 ? (
                                   <ul className="space-y-1">
                                     {analysis.business_model.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -536,12 +546,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
                               
-                              {analysis.products && analysis.products.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Products</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Products</h5>
+                                {analysis.products && analysis.products.length > 0 ? (
                                   <ul className="space-y-1">
                                     {analysis.products.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -550,12 +562,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
 
-                              {analysis.processes && analysis.processes.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Processes</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Processes</h5>
+                                {analysis.processes && analysis.processes.length > 0 ? (
                                   <ul className="space-y-1">
                                     {analysis.processes.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -564,12 +578,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
 
-                              {analysis.regions && analysis.regions.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Regions</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Regions</h5>
+                                {analysis.regions && analysis.regions.length > 0 ? (
                                   <ul className="space-y-1">
                                     {analysis.regions.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -578,12 +594,14 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
 
-                              {analysis.other && analysis.other.length > 0 && (
-                                <div>
-                                  <h5 className="font-medium text-primary mb-2">Other</h5>
+                              <div>
+                                <h5 className="font-medium text-primary mb-2">Other</h5>
+                                {analysis.other && analysis.other.length > 0 ? (
                                   <ul className="space-y-1">
                                     {analysis.other.slice(0, 3).map((item, index) => (
                                       <li key={index} className="text-xs flex items-start gap-2">
@@ -592,8 +610,10 @@ const ComparisonPage = () => {
                                       </li>
                                     ))}
                                   </ul>
-                                </div>
-                              )}
+                                ) : (
+                                  <p className="text-xs text-muted-foreground italic">No Updates</p>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

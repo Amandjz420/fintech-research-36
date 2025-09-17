@@ -508,9 +508,9 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
     <CardContent>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Business Model */}
-        {data.extra_info.business_model && data.extra_info.business_model.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Business Model</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Business Model</h4>
+          {data.extra_info.business_model && data.extra_info.business_model.length > 0 ? (
             <ul className="space-y-2">
               {data.extra_info.business_model.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
@@ -527,13 +527,15 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Products */}
-        {data.extra_info.products && data.extra_info.products.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Products</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Products</h4>
+          {data.extra_info.products && data.extra_info.products.length > 0 ? (
             <ul className="space-y-2">
               {data.extra_info.products.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
@@ -550,13 +552,15 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Processes */}
-        {data.extra_info.processes && data.extra_info.processes.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Processes</h4>
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Processes</h4>
+          {data.extra_info.processes && data.extra_info.processes.length > 0 ? (
             <ul className="space-y-2">
               {data.extra_info.processes.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
@@ -573,13 +577,15 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
-        {/* Region */}
-        {data.extra_info.regions && data.extra_info.regions.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-3 text-primary">Region</h4>
+        {/* Regions */}
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Regions</h4>
+          {data.extra_info.regions && data.extra_info.regions.length > 0 ? (
             <ul className="space-y-2">
               {data.extra_info.regions.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
@@ -596,13 +602,15 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
 
         {/* Other */}
-        {data.extra_info.other && data.extra_info.other.length > 0 && (
-          <div className="md:col-span-2">
-            <h4 className="font-semibold mb-3 text-primary">Other Information</h4>
+        <div className="md:col-span-2">
+          <h4 className="font-semibold mb-3 text-primary">Other Information</h4>
+          {data.extra_info.other && data.extra_info.other.length > 0 ? (
             <ul className="space-y-2">
               {data.extra_info.other.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
@@ -619,8 +627,10 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
                 </li>
               ))}
             </ul>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
       </div>
     </CardContent>
   </Card>
