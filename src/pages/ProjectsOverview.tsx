@@ -53,15 +53,15 @@ const ProjectsOverview: React.FC = () => {
         </Button>
       </div>
 
-      {projects.length === 0 ? (
+      {projects.filter(project => project.is_active).length === 0 ? (
         <div className="text-center py-12">
           <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">No projects found</h3>
-          <p className="text-muted-foreground">No wayback analysis projects are available yet.</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">No active projects found</h3>
+          <p className="text-muted-foreground">No active wayback analysis projects are available yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map(project => (
+          {projects.filter(project => project.is_active).map(project => (
             <ProjectCard 
               key={project.id} 
               project={project} 
