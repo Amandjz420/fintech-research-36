@@ -28,6 +28,7 @@ const ComparisonPage = () => {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<{ project: boolean; company: boolean }>({ project: false, company: false });
 
   // Load companies on mount
   useEffect(() => {
@@ -119,6 +120,52 @@ const ComparisonPage = () => {
 
     loadQuarterlyData();
   }, [selectedCompanyId, selectedYear, selectedQuarter]);
+
+  const handleProcessProjectAnalysis = async () => {
+    if (!project) return;
+    
+    setProcessing(prev => ({ ...prev, project: true }));
+    try {
+      await apiService.processProjectQuarterlyAnalysis(project.id);
+      // Refresh the data
+      if (selectedCompanyId && selectedYear && selectedQuarter) {
+        const [companyData, projectData] = await Promise.all([
+          apiService.getCompanyQuarterlyData(selectedCompanyId, selectedYear, selectedQuarter),
+          apiService.getQuarterlyAnalysis(selectedCompanyId, selectedYear, selectedQuarter)
+        ]);
+        setCompanyQuarterlyData(companyData);
+        setProjectQuarterlyData(projectData);
+      }
+    } catch (error) {
+      console.error('Error processing project analysis:', error);
+    } finally {
+      setProcessing(prev => ({ ...prev, project: false }));
+    }
+  };
+
+  const handleProcessCompanyAnalysis = async () => {
+    if (!company) return;
+    
+    setProcessing(prev => ({ ...prev, company: true }));
+    try {
+      await apiService.processCompanyQuarterlyAnalysis(company.id);
+      // Refresh the data
+      if (selectedCompanyId && selectedYear && selectedQuarter) {
+        const [companyData, projectData] = await Promise.all([
+          apiService.getCompanyQuarterlyData(selectedCompanyId, selectedYear, selectedQuarter),
+          apiService.getQuarterlyAnalysis(selectedCompanyId, selectedYear, selectedQuarter)
+        ]);
+        setCompanyQuarterlyData(companyData);
+        setProjectQuarterlyData(projectData);
+      }
+    } catch (error) {
+      console.error('Error processing company analysis:', error);
+    } finally {
+      setProcessing(prev => ({ ...prev, company: false }));
+    }
+  };
+
+  const categories = ['business_model', 'products', 'processes', 'regions', 'other'];
 
   const downloadComparisonPDF = () => {
     if (!company || !project || !selectedYear || !selectedQuarter) return;
@@ -417,6 +464,26 @@ const ComparisonPage = () => {
                       Download Comparison PDF
                     </Button>
                   )}
+                </div>
+
+                {/* Process buttons */}
+                <div className="flex gap-4 mb-6">
+                  <Button 
+                    onClick={handleProcessProjectAnalysis}
+                    disabled={processing.project || !project}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {processing.project ? "Processing..." : "Process Project Analysis"}
+                  </Button>
+                  <Button 
+                    onClick={handleProcessCompanyAnalysis}
+                    disabled={processing.company || !company}
+                    variant="outline"
+                    size="sm"
+                  >
+                    {processing.company ? "Processing..." : "Process Company Analysis"}
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -344,5 +344,37 @@ export const apiService = {
       console.error('Error fetching company quarterly data:', error);
       throw error;
     }
+  },
+
+  async processProjectQuarterlyAnalysis(projectId: number): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/snapshots/projects/${projectId}/quarterly_analysis/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to process project quarterly analysis');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error processing project quarterly analysis:', error);
+      throw error;
+    }
+  },
+
+  async processCompanyQuarterlyAnalysis(companyId: number): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/companies/${companyId}/quarterly_entry_analysis/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      if (!response.ok) {
+        throw new Error('Failed to process company quarterly analysis');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error processing company quarterly analysis:', error);
+      throw error;
+    }
   }
 };
