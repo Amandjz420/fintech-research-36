@@ -15,7 +15,9 @@ import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 
 const CompanyDetail = () => {
+  console.log('CompanyDetail component rendered');
   const { companyId } = useParams<{ companyId: string }>();
+  console.log('Company ID from params:', companyId);
   const navigate = useNavigate();
   const [data, setData] = useState<GroupedEntriesResponse | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
@@ -27,7 +29,9 @@ const CompanyDetail = () => {
   const [quarterlyData, setQuarterlyData] = useState<CompanyQuarterlyData[]>([]);
 
   const fetchData = async () => {
+    console.log('fetchData called with companyId:', companyId);
     if (!companyId) {
+      console.log('No companyId provided');
       setError('Company ID is required');
       setLoading(false);
       return;
@@ -39,22 +43,27 @@ const CompanyDetail = () => {
       console.log('Fetching data with includeCitations:', includeCitations);
       
       // Load both grouped entries and company details
+      console.log('About to fetch data for companyId:', parseInt(companyId));
       const [entriesResponse, companyResponse] = await Promise.all([
         apiService.getGroupedEntries(parseInt(companyId), includeCitations),
         apiService.getCompanyDetails(parseInt(companyId))
       ]);
       
+      console.log('Received entriesResponse:', entriesResponse);
+      console.log('Received companyResponse:', companyResponse);
+      
       setData(entriesResponse);
       setCompany(companyResponse);
     } catch (err) {
-      setError('Failed to load company data. Please try again.');
-      console.error('Error fetching company data:', err);
+      console.error('Detailed error fetching company data:', err);
+      setError(`Failed to load company data: ${err instanceof Error ? err.message : 'Unknown error'}. Please try again.`);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    console.log('useEffect triggered for fetchData with companyId:', companyId, 'includeCitations:', includeCitations);
     fetchData();
   }, [companyId, includeCitations]);
 
