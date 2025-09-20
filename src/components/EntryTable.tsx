@@ -51,9 +51,7 @@ const EntryTable: React.FC<EntryTableProps> = ({ entries }) => {
 
   const parseTags = (tagString: string) => {
     if (!tagString) return [];
-    const match = tagString.match(/Tags:\s*(.+)/);
-    if (!match) return [];
-    return match[1].split(',').map(tag => tag.trim()).filter(tag => tag);
+    return tagString.split(',').map(tag => tag.trim()).filter(tag => tag);
   };
 
   return (
