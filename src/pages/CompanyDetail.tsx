@@ -616,6 +616,31 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
           )}
         </div>
 
+        {/* Launches */}
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Launches</h4>
+          {data.extra_info.launches && data.extra_info.launches.length > 0 ? (
+            <ul className="space-y-2">
+              {data.extra_info.launches.map((item, index) => (
+                <li key={index} className="text-sm flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span className="flex-1">{item.content}</span>
+                  <a
+                    href={item.sources}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
+
         {/* Other */}
         <div className="md:col-span-2">
           <h4 className="font-semibold mb-3 text-primary">Other Information</h4>

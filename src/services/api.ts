@@ -149,6 +149,7 @@ export interface CompanyQuarterlyData {
     processes?: Array<{ content: string; sources: string }>;
     products?: Array<{ content: string; sources: string }>;
     regions?: Array<{ content: string; sources: string }>;
+    launches?: Array<{ content: string; sources: string }>;
   };
   company: number;
 }
