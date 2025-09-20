@@ -2,14 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Company, apiService } from '../services/api';
 import CompanyCard from '../components/CompanyCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import { BarChart3 } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 const Landing = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -20,6 +23,7 @@ const Landing = () => {
       setError(null);
       const data = await apiService.getCompanies();
       setCompanies(data);
+      setFilteredCompanies(data);
     } catch (err) {
       setError('Failed to load companies. Please try again.');
       console.error('Error fetching companies:', err);
@@ -31,6 +35,17 @@ const Landing = () => {
   useEffect(() => {
     fetchCompanies();
   }, []);
+
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredCompanies(companies);
+    } else {
+      const filtered = companies.filter(company =>
+        company.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredCompanies(filtered);
+    }
+  }, [searchTerm, companies]);
 
   if (loading) {
     return (
@@ -62,32 +77,30 @@ const Landing = () => {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-6">
             Explore detailed analytics and insights for companies in our database
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => navigate('/projects')}
-              className="flex items-center gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              View Wayback Analysis Projects
-            </Button>
-            <Button 
-              onClick={() => navigate('/comparison')} 
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              Compare Analysis
-            </Button>
+          
+          <div className="max-w-md mx-auto mb-8">
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search companies by name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
         </div>
 
-        {companies.length === 0 ? (
+        {filteredCompanies.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No companies found.</p>
+            <p className="text-gray-600 text-lg">
+              {searchTerm ? `No companies found matching "${searchTerm}"` : 'No companies found.'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {companies.map((company) => (
+            {filteredCompanies.map((company) => (
               <CompanyCard key={company.id} company={company} />
             ))}
           </div>
