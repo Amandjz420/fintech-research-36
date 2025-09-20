@@ -7,9 +7,10 @@ import MonthAccordion from './MonthAccordion';
 interface YearAccordionProps {
   year: string;
   monthsData: { [month: string]: Entry[] };
+  onRefreshEntry?: (entryId: number) => void;
 }
 
-const YearAccordion: React.FC<YearAccordionProps> = ({ year, monthsData }) => {
+const YearAccordion: React.FC<YearAccordionProps> = ({ year, monthsData, onRefreshEntry }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Sort months in descending order (December to January)
@@ -47,10 +48,11 @@ const YearAccordion: React.FC<YearAccordionProps> = ({ year, monthsData }) => {
       {isOpen && (
         <div className="p-6 bg-white animate-accordion-down">
           {sortedMonths.map((month) => (
-            <MonthAccordion
-              key={month}
-              month={month}
+            <MonthAccordion 
+              key={month} 
+              month={month} 
               entries={monthsData[month]}
+              onRefreshEntry={onRefreshEntry}
             />
           ))}
         </div>

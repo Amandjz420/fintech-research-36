@@ -377,5 +377,18 @@ export const apiService = {
       console.error('Error processing company quarterly analysis:', error);
       throw error;
     }
+  },
+
+  async refreshEntry(entryId: number): Promise<Entry> {
+    try {
+      const response = await fetch(`https://fintech.devmate.in/api/entries/${entryId}/`);
+      if (!response.ok) {
+        throw new Error('Failed to refresh entry');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error refreshing entry:', error);
+      throw error;
+    }
   }
 };

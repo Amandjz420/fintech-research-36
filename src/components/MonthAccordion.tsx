@@ -7,9 +7,10 @@ import EntryTable from './EntryTable';
 interface MonthAccordionProps {
   month: string;
   entries: Entry[];
+  onRefreshEntry?: (entryId: number) => void;
 }
 
-const MonthAccordion: React.FC<MonthAccordionProps> = ({ month, entries }) => {
+const MonthAccordion: React.FC<MonthAccordionProps> = ({ month, entries, onRefreshEntry }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const getMonthName = (monthNum: string) => {
@@ -41,7 +42,7 @@ const MonthAccordion: React.FC<MonthAccordionProps> = ({ month, entries }) => {
       
       {isOpen && (
         <div className="border-t border-gray-200 animate-accordion-down">
-          <EntryTable entries={entries} />
+          <EntryTable entries={entries} onRefreshEntry={onRefreshEntry} />
         </div>
       )}
     </div>

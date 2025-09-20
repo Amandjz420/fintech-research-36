@@ -10,10 +10,12 @@ import RemarkModal from './RemarkModal';
 
 interface EntryTableProps {
   entries: Entry[];
+  onRefreshEntry?: (entryId: number) => void;
 }
 
-const EntryTable: React.FC<EntryTableProps> = ({ entries }) => {
+const EntryTable: React.FC<EntryTableProps> = ({ entries, onRefreshEntry }) => {
   const [processingEntries, setProcessingEntries] = useState<Set<number>>(new Set());
+  const [refreshingEntries, setRefreshingEntries] = useState<Set<number>>(new Set());
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null);
   const [isRemarkModalOpen, setIsRemarkModalOpen] = useState(false);
 
@@ -42,6 +44,30 @@ const EntryTable: React.FC<EntryTableProps> = ({ entries }) => {
   const handleAddRemark = (entry: Entry) => {
     setSelectedEntry(entry);
     setIsRemarkModalOpen(true);
+  };
+
+  const handleRefreshEntry = async (entryId: number) => {
+    setRefreshingEntries(prev => new Set(prev).add(entryId));
+    
+    try {
+      const response = await fetch(`https://fintech.devmate.in/api/entries/${entryId}/`);
+      if (!response.ok) {
+        throw new Error('Failed to refresh entry');
+      }
+      
+      // Call the parent's refresh callback to update the entry data
+      if (onRefreshEntry) {
+        onRefreshEntry(entryId);
+      }
+    } catch (error) {
+      console.error('Error refreshing entry:', error);
+    } finally {
+      setRefreshingEntries(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(entryId);
+        return newSet;
+      });
+    }
   };
 
   const handleRemarkUpdated = () => {
@@ -87,15 +113,31 @@ const EntryTable: React.FC<EntryTableProps> = ({ entries }) => {
                   <div className="text-xs text-gray-500 mt-1">
                     {new Date(entry.date).toLocaleDateString()}
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleAddRemark(entry)}
-                    className="mt-2 h-6 px-2 text-xs text-blue-600 hover:text-blue-800"
-                  >
-                    <MessageSquare className="h-3 w-3 mr-1" />
-                    Add Remark
-                  </Button>
+                  <div className="space-y-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleAddRemark(entry)}
+                      className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      <MessageSquare className="h-3 w-3 mr-1" />
+                      Add Remark
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRefreshEntry(entry.id)}
+                      disabled={refreshingEntries.has(entry.id)}
+                      className="h-6 px-2 text-xs text-green-600 hover:text-green-800"
+                    >
+                      {refreshingEntries.has(entry.id) ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                      )}
+                      Refresh
+                    </Button>
+                  </div>
                 </td>
                 
                 <td className="px-6 py-4">

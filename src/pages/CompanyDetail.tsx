@@ -95,6 +95,34 @@ const CompanyDetail = () => {
     setIncludeCitations(checked);
   };
 
+  const handleRefreshEntry = async (entryId: number) => {
+    try {
+      const refreshedEntry = await apiService.refreshEntry(entryId);
+      
+      // Update the entry in the current data
+      if (data) {
+        const updatedData = { ...data };
+        updatedData.entry_year_wise = updatedData.entry_year_wise.map(yearObj => {
+          const year = Object.keys(yearObj)[0];
+          const monthsData = yearObj[year];
+          const updatedMonthsData = { ...monthsData };
+          
+          Object.keys(updatedMonthsData).forEach(month => {
+            updatedMonthsData[month] = updatedMonthsData[month].map(entry => 
+              entry.id === entryId ? refreshedEntry : entry
+            );
+          });
+          
+          return { [year]: updatedMonthsData };
+        });
+        
+        setData(updatedData);
+      }
+    } catch (error) {
+      console.error('Error refreshing entry:', error);
+    }
+  };
+
   const downloadCompanyQuarterlyPDF = (data: CompanyQuarterlyData[], companyName: string, year: number, quarter: string) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -494,6 +522,7 @@ const CompanyDetail = () => {
                   key={year}
                   year={year}
                   monthsData={allMonthsData}
+                  onRefreshEntry={handleRefreshEntry}
                 />
               );
             })}
