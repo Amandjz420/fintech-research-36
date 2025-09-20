@@ -390,5 +390,27 @@ export const apiService = {
       console.error('Error refreshing entry:', error);
       throw error;
     }
+  },
+
+  async fetchYearlyUpdates(companyId: number, year: number, monthToStart: number): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/companies/${companyId}/fetch_yearly_updates/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          year,
+          month_to_start: monthToStart
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch yearly updates');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching yearly updates:', error);
+      throw error;
+    }
   }
 };
