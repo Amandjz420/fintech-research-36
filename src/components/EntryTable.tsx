@@ -141,29 +141,38 @@ const EntryTable: React.FC<EntryTableProps> = ({ entries, onRefreshEntry }) => {
                 </td>
                 
                 <td className="px-6 py-4">
-                  {entry.extra_info_text ? (
-                    <div className="text-sm text-gray-900 leading-relaxed max-w-2xl">
-                      {entry.extra_info_text}
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-2">
-                      {processingEntries.has(entry.id) ? (
-                        <div className="flex items-center space-x-2 text-sm text-blue-600">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Processing... Check back in 10 seconds</span>
-                        </div>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleProcessSources(entry.id)}
-                          className="text-xs"
-                        >
-                          Generate Description
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900 leading-relaxed max-w-2xl">
+                    {entry.description && (
+                      <div className="mb-2">
+                        <span className="font-medium">Description: </span>
+                        {entry.description}
+                      </div>
+                    )}
+                    {entry.extra_info_text ? (
+                      <div>
+                        <span className="font-medium">Additional Info: </span>
+                        {entry.extra_info_text}
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2 mt-2">
+                        {processingEntries.has(entry.id) ? (
+                          <div className="flex items-center space-x-2 text-sm text-blue-600">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Processing... Check back in 10 seconds</span>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleProcessSources(entry.id)}
+                            className="text-xs"
+                          >
+                            Generate Description
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 
                 <td className="px-4 py-4 w-40">
