@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download, GitCompare, Play } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download, Play } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { GroupedEntriesResponse, CompanyQuarterlyData, Company, apiService } from '../services/api';
 import YearAccordion from '../components/YearAccordion';
@@ -288,14 +288,6 @@ const CompanyDetail = () => {
             Back to Companies
           </button>
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => navigate(`/comparison?companyId=${companyId}`)}
-            className="flex items-center gap-2"
-          >
-            Compare Analysis
-          </Button>
         </div>
           <ErrorMessage message={error} onRetry={fetchData} />
         </div>
@@ -415,16 +407,6 @@ const CompanyDetail = () => {
                       )}
                     </div>
                     
-                    <div className="pt-4 border-t">
-                      <Button 
-                        onClick={() => navigate(`/comparison?companyId=${company.id}`)}
-                        variant="outline"
-                        className="w-full flex items-center gap-2"
-                      >
-                        <GitCompare className="h-4 w-4" />
-                        Compare Company vs Project Analysis
-                      </Button>
-                    </div>
                   </div>
                 </TabsContent>
                 
