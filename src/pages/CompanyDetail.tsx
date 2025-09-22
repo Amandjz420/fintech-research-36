@@ -609,9 +609,9 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
         {/* Business Model */}
         <div>
           <h4 className="font-semibold mb-3 text-primary">Business Model</h4>
-          {data.extra_info.business_model && data.extra_info.business_model.length > 0 ? (
+          {data.business_model && data.business_model.length > 0 ? (
             <ul className="space-y-2">
-              {data.extra_info.business_model.map((item, index) => (
+              {data.business_model.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span className="flex-1">{item.content}</span>
@@ -634,9 +634,9 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
         {/* Products */}
         <div>
           <h4 className="font-semibold mb-3 text-primary">Products</h4>
-          {data.extra_info.products && data.extra_info.products.length > 0 ? (
+          {data.products && data.products.length > 0 ? (
             <ul className="space-y-2">
-              {data.extra_info.products.map((item, index) => (
+              {data.products.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span className="flex-1">{item.content}</span>
@@ -659,9 +659,9 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
         {/* Processes */}
         <div>
           <h4 className="font-semibold mb-3 text-primary">Processes</h4>
-          {data.extra_info.processes && data.extra_info.processes.length > 0 ? (
+          {data.processes && data.processes.length > 0 ? (
             <ul className="space-y-2">
-              {data.extra_info.processes.map((item, index) => (
+              {data.processes.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span className="flex-1">{item.content}</span>
@@ -684,9 +684,9 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
         {/* Regions */}
         <div>
           <h4 className="font-semibold mb-3 text-primary">Regions</h4>
-          {data.extra_info.regions && data.extra_info.regions.length > 0 ? (
+          {data.regions && data.regions.length > 0 ? (
             <ul className="space-y-2">
-              {data.extra_info.regions.map((item, index) => (
+              {data.regions.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span className="flex-1">{item.content}</span>
@@ -709,9 +709,84 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
         {/* Launches */}
         <div>
           <h4 className="font-semibold mb-3 text-primary">Launches</h4>
-          {data.extra_info.launches && data.extra_info.launches.length > 0 ? (
+          {data.launches && data.launches.length > 0 ? (
             <ul className="space-y-2">
-              {data.extra_info.launches.map((item, index) => (
+              {data.launches.map((item, index) => (
+                <li key={index} className="text-sm flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span className="flex-1">{item.content}</span>
+                  <a
+                    href={item.sources}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
+
+        {/* Security Updates */}
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Security Updates</h4>
+          {data.security_updates && data.security_updates.length > 0 ? (
+            <ul className="space-y-2">
+              {data.security_updates.map((item, index) => (
+                <li key={index} className="text-sm flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span className="flex-1">{item.content}</span>
+                  <a
+                    href={item.sources}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
+
+        {/* API Updates */}
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">API Updates</h4>
+          {data.api_updates && data.api_updates.length > 0 ? (
+            <ul className="space-y-2">
+              {data.api_updates.map((item, index) => (
+                <li key={index} className="text-sm flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span className="flex-1">{item.content}</span>
+                  <a
+                    href={item.sources}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">No Updates</p>
+          )}
+        </div>
+
+        {/* Account Aggregator Updates */}
+        <div>
+          <h4 className="font-semibold mb-3 text-primary">Account Aggregator Updates</h4>
+          {data.account_aggregator_updates && data.account_aggregator_updates.length > 0 ? (
+            <ul className="space-y-2">
+              {data.account_aggregator_updates.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span className="flex-1">{item.content}</span>
@@ -734,9 +809,9 @@ const CompanyQuarterlyCard: React.FC<CompanyQuarterlyCardProps> = ({ data }) => 
         {/* Other */}
         <div className="md:col-span-2">
           <h4 className="font-semibold mb-3 text-primary">Other Information</h4>
-          {data.extra_info.other && data.extra_info.other.length > 0 ? (
+          {data.other && data.other.length > 0 ? (
             <ul className="space-y-2">
-              {data.extra_info.other.map((item, index) => (
+              {data.other.map((item, index) => (
                 <li key={index} className="text-sm flex items-start gap-2">
                   <span className="text-primary">•</span>
                   <span className="flex-1">{item.content}</span>

@@ -143,14 +143,16 @@ export interface CompanyQuarterlyData {
   year: number;
   information: string;
   source: string;
-  extra_info: {
-    business_model?: Array<{ content: string; sources: string }>;
-    other?: Array<{ content: string; sources: string }>;
-    processes?: Array<{ content: string; sources: string }>;
-    products?: Array<{ content: string; sources: string }>;
-    regions?: Array<{ content: string; sources: string }>;
-    launches?: Array<{ content: string; sources: string }>;
-  };
+  products?: Array<{ content: string; sources: string }>;
+  processes?: Array<{ content: string; sources: string }>;
+  business_model?: Array<{ content: string; sources: string }>;
+  regions?: Array<{ content: string; sources: string }>;
+  launches?: Array<{ content: string; sources: string }>;
+  security_updates?: Array<{ content: string; sources: string }>;
+  api_updates?: Array<{ content: string; sources: string }>;
+  account_aggregator_updates?: Array<{ content: string; sources: string }>;
+  other?: Array<{ content: string; sources: string }>;
+  extra_info?: any;
   company: number;
 }
 
