@@ -44,13 +44,11 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       <div className="space-y-2">
         <Label htmlFor="company-select">Company</Label>
         <Select
-          value={localFilters.company_id?.toString()}
+          value={localFilters.company_id?.toString() || "all"}
           onValueChange={(value) => {
-            const companyName = value ? companies.find(c => c.id === parseInt(value))?.name : undefined;
             setLocalFilters(prev => ({ 
               ...prev, 
-              company_id: value ? parseInt(value) : undefined,
-              company_name: companyName
+              company_id: value === "all" ? undefined : parseInt(value)
             }));
           }}
         >
@@ -58,7 +56,7 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
             <SelectValue placeholder="Select company" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Companies</SelectItem>
+            <SelectItem value="all">All Companies</SelectItem>
             {companies.map(company => (
               <SelectItem key={company.id} value={company.id.toString()}>
                 {company.name}
@@ -71,11 +69,11 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       <div className="space-y-2">
         <Label htmlFor="year-select">Year</Label>
         <Select
-          value={localFilters.year?.toString()}
+          value={localFilters.year?.toString() || "all"}
           onValueChange={(value) => 
             setLocalFilters(prev => ({ 
               ...prev, 
-              year: value ? parseInt(value) : undefined 
+              year: value === "all" ? undefined : parseInt(value)
             }))
           }
         >
@@ -83,7 +81,7 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
             <SelectValue placeholder="Select year" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Years</SelectItem>
+            <SelectItem value="all">All Years</SelectItem>
             {years.map(year => (
               <SelectItem key={year} value={year.toString()}>
                 {year}
@@ -96,17 +94,17 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       <div className="space-y-2">
         <Label>Quarter</Label>
         <RadioGroup
-          value={localFilters.quarter || ""}
+          value={localFilters.quarter || "all"}
           onValueChange={(value) => 
             setLocalFilters(prev => ({ 
               ...prev, 
-              quarter: value || undefined 
+              quarter: value === "all" ? undefined : value
             }))
           }
           className="flex flex-row space-x-4"
         >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="" id="all-quarters" />
+            <RadioGroupItem value="all" id="all-quarters" />
             <Label htmlFor="all-quarters" className="text-sm">All</Label>
           </div>
           {quarters.map(quarter => (
