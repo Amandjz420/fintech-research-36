@@ -115,13 +115,13 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
 
           {/* Heatmap */}
           <div className="overflow-x-auto">
-            <div className="min-w-[800px]">
+            <div className="min-w-[1200px]">
               {/* Year headers */}
-              <div className="flex mb-2">
-                <div className="w-40 flex-shrink-0"></div>
+              <div className="flex mb-3">
+                <div className="w-48 flex-shrink-0"></div>
                 {heatmapData.years.map(year => (
-                  <div key={year} className="grid grid-cols-4 gap-1 flex-1">
-                    <div className="col-span-4 text-center text-sm font-medium text-muted-foreground border-b pb-1 mb-2">
+                  <div key={year} className="w-80 text-center">
+                    <div className="text-lg font-semibold text-foreground border-b-2 border-primary/20 pb-2 mb-3">
                       {year}
                     </div>
                   </div>
@@ -130,11 +130,11 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
 
               {/* Quarter headers */}
               <div className="flex mb-4">
-                <div className="w-40 flex-shrink-0"></div>
+                <div className="w-48 flex-shrink-0"></div>
                 {heatmapData.years.map(year => (
-                  <div key={`quarters-${year}`} className="grid grid-cols-4 gap-1 flex-1">
+                  <div key={`quarters-${year}`} className="w-80 grid grid-cols-4 gap-2">
                     {heatmapData.quarters.map(quarter => (
-                      <div key={`${year}-${quarter}`} className="text-center text-xs text-muted-foreground font-medium">
+                      <div key={`${year}-${quarter}`} className="text-center text-sm font-medium text-muted-foreground py-1">
                         {quarter}
                       </div>
                     ))}
@@ -143,26 +143,26 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
               </div>
 
               {/* Company rows */}
-              <div className="space-y-2">
-                {heatmapData.companies.map(company => (
+              <div className="space-y-3">
+                {heatmapData.companies.slice(0, 15).map(company => (
                   <div key={company} className="flex items-center">
-                    <div className="w-40 flex-shrink-0 pr-4">
-                      <div className="text-sm font-medium truncate" title={company}>
-                        {company}
+                    <div className="w-48 flex-shrink-0 pr-4">
+                      <div className="text-sm font-medium text-foreground" title={company}>
+                        {company.length > 20 ? `${company.slice(0, 20)}...` : company}
                       </div>
                     </div>
                     {heatmapData.years.map(year => (
-                      <div key={`${company}-${year}`} className="grid grid-cols-4 gap-1 flex-1">
+                      <div key={`${company}-${year}`} className="w-80 grid grid-cols-4 gap-2">
                         {heatmapData.quarters.map(quarter => {
                           const key = `${company}-${year}-${quarter.toLowerCase()}`;
                           const count = heatmapData.matrix.get(key) || 0;
                           return (
                             <div
                               key={key}
-                              className={`h-8 rounded-sm ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-sm border border-border/50`}
-                              title={`${company} - ${quarter} ${year}: ${count} innovations`}
+                              className={`h-12 w-full rounded-md ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-md border border-border/50 hover:border-primary/50`}
+                              title={`${company} - ${quarter.toUpperCase()} ${year}: ${count} innovations`}
                             >
-                              <span className="text-xs font-medium text-foreground">
+                              <span className="text-sm font-semibold text-foreground">
                                 {count > 0 ? count : ''}
                               </span>
                             </div>
@@ -173,26 +173,41 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
                   </div>
                 ))}
               </div>
+
+              {/* Show more indicator if there are more companies */}
+              {heatmapData.companies.length > 15 && (
+                <div className="mt-6 text-center">
+                  <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                    Showing top 15 companies. Total: {heatmapData.companies.length} companies
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Summary stats */}
-          <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t">
             <div className="text-center">
-              <div className="text-lg font-bold text-primary">{maxCount}</div>
-              <div className="text-xs text-muted-foreground">Max per quarter</div>
+              <div className="text-2xl font-bold text-primary">{maxCount}</div>
+              <div className="text-sm text-muted-foreground">Max per quarter</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-primary">
-                {heatmapData.companies.length}
+              <div className="text-2xl font-bold text-primary">
+                {Math.min(15, heatmapData.companies.length)}
               </div>
-              <div className="text-xs text-muted-foreground">Active companies</div>
+              <div className="text-sm text-muted-foreground">Companies shown</div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-bold text-primary">
+              <div className="text-2xl font-bold text-primary">
                 {Array.from(heatmapData.matrix.values()).filter(v => v > 0).length}
               </div>
-              <div className="text-xs text-muted-foreground">Active quarters</div>
+              <div className="text-sm text-muted-foreground">Active quarters</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-primary">
+                {heatmapData.years.length}
+              </div>
+              <div className="text-sm text-muted-foreground">Years covered</div>
             </div>
           </div>
         </div>
