@@ -2,46 +2,54 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp } from 'lucide-react';
-import { Company, CompanyQuarterlyData } from '@/services/api';
+import { GroupedQuarterlyData } from '@/services/api';
 
 interface InnovationHeatmapProps {
-  data: CompanyQuarterlyData[];
-  companies: Company[];
+  data: GroupedQuarterlyData[];
 }
 
-export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data, companies }) => {
+export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) => {
   // Create heatmap data structure
   const heatmapData = React.useMemo(() => {
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
     const years = [...new Set(data.map(d => d.year))].sort((a, b) => b - a);
-    const companyIds = [...new Set(data.map(d => d.company))];
+    const companies = [...new Set(data.map(d => d.company_name))].sort();
 
     const matrix = new Map<string, number>();
 
     // Initialize matrix
-    companyIds.forEach(companyId => {
+    companies.forEach(company => {
       years.forEach(year => {
         quarters.forEach(quarter => {
-          matrix.set(`${companyId}-${year}-${quarter.toLowerCase()}`, 0);
+          matrix.set(`${company}-${year}-${quarter.toLowerCase()}`, 0);
         });
       });
     });
 
     // Populate with actual data
     data.forEach(item => {
-      const key = `${item.company}-${item.year}-${item.quarter}`;
-      const count = [
-        ...(item.products || []),
-        ...(item.processes || []),
-        ...(item.business_model || []),
-        ...(item.regions || []),
-        ...(item.launches || []),
-        ...(item.other || [])
-      ].length;
+      const key = `${item.company_name}-${item.year}-${item.quarter}`;
+      const categories = [
+        item.products,
+        item.processes,
+        item.business_model,
+        item.regions,
+        item.launches,
+        item.security_updates,
+        item.api_updates,
+        item.account_aggregator_updates,
+        item.other
+      ];
+
+      const count = categories.reduce((total, category) => {
+        if (!category || !category.trim()) return total;
+        return total + category.split('\n').filter(line => line.trim()).length;
+      }, 0);
+
       matrix.set(key, count);
     });
 
-    return { matrix, years, quarters, companyIds };
+    return { matrix, years, quarters, companies };
   }, [data]);
 
   const getIntensityClass = (count: number) => {
@@ -125,37 +133,34 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data, comp
               </div>
 
               {/* Company rows */}
-              {heatmapData.companyIds.map(companyId => {
-                const company = companies.find(c => c.id === companyId);
-                return (
-                  <div key={companyId} className="flex items-center mb-1">
-                    <div className="w-32 flex-shrink-0 pr-4">
-                      <div className="text-sm font-medium truncate" title={company?.name}>
-                        {company?.name || 'Unknown'}
-                      </div>
+              {heatmapData.companies.map(company => (
+                <div key={company} className="flex items-center mb-1">
+                  <div className="w-32 flex-shrink-0 pr-4">
+                    <div className="text-sm font-medium truncate" title={company}>
+                      {company}
                     </div>
-                    {heatmapData.years.map(year => (
-                      <div key={`${companyId}-${year}`} className="flex gap-1">
-                        {heatmapData.quarters.map(quarter => {
-                          const key = `${companyId}-${year}-${quarter.toLowerCase()}`;
-                          const count = heatmapData.matrix.get(key) || 0;
-                          return (
-                            <div
-                              key={key}
-                              className={`w-18 h-6 rounded-sm ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-110`}
-                              title={`${company?.name || 'Unknown'} - ${quarter} ${year}: ${count} innovations`}
-                            >
-                              <span className="text-xs font-medium text-foreground">
-                                {count > 0 ? count : ''}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
                   </div>
-                );
-              })}
+                  {heatmapData.years.map(year => (
+                    <div key={`${company}-${year}`} className="flex gap-1">
+                      {heatmapData.quarters.map(quarter => {
+                        const key = `${company}-${year}-${quarter.toLowerCase()}`;
+                        const count = heatmapData.matrix.get(key) || 0;
+                        return (
+                          <div
+                            key={key}
+                            className={`w-18 h-6 rounded-sm ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-110`}
+                            title={`${company} - ${quarter} ${year}: ${count} innovations`}
+                          >
+                            <span className="text-xs font-medium text-foreground">
+                              {count > 0 ? count : ''}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -167,7 +172,7 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data, comp
             </div>
             <div className="text-center">
               <div className="text-lg font-bold text-primary">
-                {heatmapData.companyIds.length}
+                {heatmapData.companies.length}
               </div>
               <div className="text-xs text-muted-foreground">Active companies</div>
             </div>

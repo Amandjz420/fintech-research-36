@@ -45,12 +45,14 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
         <Label htmlFor="company-select">Company</Label>
         <Select
           value={localFilters.company_id?.toString()}
-          onValueChange={(value) => 
+          onValueChange={(value) => {
+            const companyName = value ? companies.find(c => c.id === parseInt(value))?.name : undefined;
             setLocalFilters(prev => ({ 
               ...prev, 
-              company_id: value ? parseInt(value) : undefined 
-            }))
-          }
+              company_id: value ? parseInt(value) : undefined,
+              company_name: companyName
+            }));
+          }}
         >
           <SelectTrigger id="company-select">
             <SelectValue placeholder="Select company" />

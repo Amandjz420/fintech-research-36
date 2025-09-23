@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Search, Filter, RefreshCw, BarChart3, TrendingUp } from 'lucide-react';
-import { apiService, Company, CompanyQuarterlyData } from '@/services/api';
+import { apiService, Company, GroupedQuarterlyData } from '@/services/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useToast } from '@/hooks/use-toast';
@@ -56,50 +56,57 @@ const FinancialDashboard = () => {
     
     return quarterlyData.filter(item => {
       const searchLower = searchTerm.toLowerCase();
-      const companyMatch = companies.find(c => c.id === item.company)?.name.toLowerCase().includes(searchLower);
+      const companyMatch = item.company_name.toLowerCase().includes(searchLower);
       
-      // Search in all content fields
+      // Search in all content fields (now strings)
       const contentMatch = [
-        ...(item.products || []),
-        ...(item.processes || []),
-        ...(item.business_model || []),
-        ...(item.regions || []),
-        ...(item.launches || []),
-        ...(item.other || [])
-      ].some(entry => entry.content.toLowerCase().includes(searchLower));
+        item.products,
+        item.processes,
+        item.business_model,
+        item.regions,
+        item.launches,
+        item.security_updates,
+        item.api_updates,
+        item.account_aggregator_updates,
+        item.other
+      ].some(content => content && content.toLowerCase().includes(searchLower));
       
       return companyMatch || contentMatch;
     });
-  }, [quarterlyData, searchTerm, companies]);
+  }, [quarterlyData, searchTerm]);
 
   // Export functions
-  const exportToCSV = (data: CompanyQuarterlyData[], filename: string) => {
-    const headers = ['Company', 'Year', 'Quarter', 'Category', 'Content', 'Sources'];
+  const exportToCSV = (data: GroupedQuarterlyData[], filename: string) => {
+    const headers = ['Company', 'Year', 'Quarter', 'Category', 'Content'];
     const rows = [headers];
 
     data.forEach(item => {
-      const companyName = companies.find(c => c.id === item.company)?.name || 'Unknown';
-      
       const categories = [
-        { name: 'Products', data: item.products || [] },
-        { name: 'Processes', data: item.processes || [] },
-        { name: 'Business Model', data: item.business_model || [] },
-        { name: 'Regions', data: item.regions || [] },
-        { name: 'Launches', data: item.launches || [] },
-        { name: 'Other', data: item.other || [] }
+        { name: 'Products', data: item.products },
+        { name: 'Processes', data: item.processes },
+        { name: 'Business Model', data: item.business_model },
+        { name: 'Regions', data: item.regions },
+        { name: 'Launches', data: item.launches },
+        { name: 'Security Updates', data: item.security_updates },
+        { name: 'API Updates', data: item.api_updates },
+        { name: 'Account Aggregator Updates', data: item.account_aggregator_updates },
+        { name: 'Other', data: item.other }
       ];
 
       categories.forEach(category => {
-        category.data.forEach(entry => {
-          rows.push([
-            companyName,
-            item.year.toString(),
-            item.quarter.toUpperCase(),
-            category.name,
-            entry.content,
-            entry.sources
-          ]);
-        });
+        if (category.data && category.data.trim()) {
+          // Split by numbered lines and clean up
+          const lines = category.data.split('\n').filter(line => line.trim());
+          lines.forEach(line => {
+            rows.push([
+              item.company_name,
+              item.year.toString(),
+              item.quarter.toUpperCase(),
+              category.name,
+              line.replace(/^\d+\.\s*/, '').trim() // Remove numbering
+            ]);
+          });
+        }
       });
     });
 
@@ -190,7 +197,7 @@ const FinancialDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Set(filteredData.map(d => d.company)).size}
+              {new Set(filteredData.map(d => d.company_name)).size}
             </div>
           </CardContent>
         </Card>
@@ -249,11 +256,11 @@ const FinancialDashboard = () => {
           {hasActiveFilters && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Active filters:</span>
-              {filters.company_id && (
-                <Badge variant="secondary">
-                  Company: {companies.find(c => c.id === filters.company_id)?.name}
-                </Badge>
-              )}
+          {filters.company_id && (
+            <Badge variant="secondary">
+              Company: {companies.find(c => c.id === filters.company_id)?.name}
+            </Badge>
+          )}
               {filters.year && <Badge variant="secondary">Year: {filters.year}</Badge>}
               {filters.quarter && <Badge variant="secondary">Quarter: {filters.quarter.toUpperCase()}</Badge>}
               {searchTerm && <Badge variant="secondary">Search: {searchTerm}</Badge>}
@@ -264,7 +271,7 @@ const FinancialDashboard = () => {
 
       {/* Data Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InnovationHeatmap data={filteredData} companies={companies} />
+        <InnovationHeatmap data={filteredData} />
         <CategoryDistribution data={filteredData} />
       </div>
 
@@ -287,7 +294,6 @@ const FinancialDashboard = () => {
             <TabsContent value="table">
               <DataTableView 
                 data={filteredData} 
-                companies={companies}
                 onExport={(data, filename) => exportToCSV(data, filename)}
               />
             </TabsContent>
@@ -295,7 +301,6 @@ const FinancialDashboard = () => {
             <TabsContent value="company">
               <CompanyView 
                 data={filteredData} 
-                companies={companies}
                 onExport={(data, filename) => exportToCSV(data, filename)}
               />
             </TabsContent>
@@ -303,7 +308,6 @@ const FinancialDashboard = () => {
             <TabsContent value="timeline">
               <TimelineView 
                 data={filteredData} 
-                companies={companies}
                 onExport={(data, filename) => exportToCSV(data, filename)}
               />
             </TabsContent>

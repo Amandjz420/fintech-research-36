@@ -137,6 +137,21 @@ export interface QuarterlyAnalysis {
   updated_at: string;
 }
 
+export interface GroupedQuarterlyData {
+  company_name: string;
+  year: number;
+  quarter: string;
+  products: string;
+  processes: string;
+  business_model: string;
+  regions: string;
+  launches: string;
+  security_updates: string;
+  api_updates: string;
+  account_aggregator_updates: string;
+  other: string;
+}
+
 export interface CompanyQuarterlyData {
   id: number;
   quarter: string;
@@ -420,7 +435,7 @@ export const apiService = {
     company_id?: number;
     year?: number;
     quarter?: string;
-  }): Promise<CompanyQuarterlyData[]> {
+  }): Promise<GroupedQuarterlyData[]> {
     try {
       const params = new URLSearchParams();
       if (filters?.company_id) params.append('company_id', filters.company_id.toString());
@@ -428,12 +443,20 @@ export const apiService = {
       if (filters?.quarter) params.append('quarter', filters.quarter);
 
       const url = `${API_BASE_URL}/api/grouped-quarterly-data/${params.toString() ? `?${params.toString()}` : ''}`;
+      console.log('Fetching from URL:', url);
+      
       const response = await fetch(url);
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch grouped quarterly data');
+        const errorText = await response.text();
+        console.log('Error response:', errorText);
+        throw new Error(`Failed to fetch grouped quarterly data: ${response.status} ${response.statusText}`);
       }
-      return await response.json();
+      
+      const data = await response.json();
+      console.log('Fetched data:', data);
+      return data;
     } catch (error) {
       console.error('Error fetching grouped quarterly data:', error);
       throw error;

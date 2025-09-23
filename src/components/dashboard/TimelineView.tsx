@@ -4,15 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Clock, Building2, Calendar } from 'lucide-react';
-import { Company, CompanyQuarterlyData } from '@/services/api';
+import { GroupedQuarterlyData } from '@/services/api';
 
 interface TimelineViewProps {
-  data: CompanyQuarterlyData[];
-  companies: Company[];
-  onExport: (data: CompanyQuarterlyData[], filename: string) => void;
+  data: GroupedQuarterlyData[];
+  onExport: (data: GroupedQuarterlyData[], filename: string) => void;
 }
 
-export const TimelineView: React.FC<TimelineViewProps> = ({ data, companies, onExport }) => {
+export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) => {
   // Sort data chronologically (newest first)
   const sortedData = React.useMemo(() => {
     return [...data].sort((a, b) => {
@@ -24,7 +23,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, companies, onE
 
   // Group by year and quarter for timeline structure
   const timelineData = React.useMemo(() => {
-    const timeline = new Map<string, CompanyQuarterlyData[]>();
+    const timeline = new Map<string, GroupedQuarterlyData[]>();
     
     sortedData.forEach(item => {
       const key = `${item.year}-${item.quarter}`;
@@ -39,57 +38,66 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, companies, onE
       return {
         year: parseInt(year),
         quarter,
-        items: items.sort((a, b) => {
-          const companyA = companies.find(c => c.id === a.company)?.name || '';
-          const companyB = companies.find(c => c.id === b.company)?.name || '';
-          return companyA.localeCompare(companyB);
-        })
+        items: items.sort((a, b) => a.company_name.localeCompare(b.company_name))
       };
     });
-  }, [sortedData, companies]);
+  }, [sortedData]);
 
-  const getInnovationCount = (item: CompanyQuarterlyData) => {
-    return [
-      ...(item.products || []),
-      ...(item.processes || []),
-      ...(item.business_model || []),
-      ...(item.regions || []),
-      ...(item.launches || []),
-      ...(item.other || [])
-    ].length;
+  const getInnovationCount = (item: GroupedQuarterlyData) => {
+    const categories = [
+      item.products,
+      item.processes,
+      item.business_model,
+      item.regions,
+      item.launches,
+      item.security_updates,
+      item.api_updates,
+      item.account_aggregator_updates,
+      item.other
+    ];
+
+    return categories.reduce((total, category) => {
+      if (!category || !category.trim()) return total;
+      return total + category.split('\n').filter(line => line.trim()).length;
+    }, 0);
   };
 
-  const renderInnovationSummary = (item: CompanyQuarterlyData) => {
+  const renderInnovationSummary = (item: GroupedQuarterlyData) => {
     const categories = [
-      { name: 'Products', data: item.products || [], color: 'bg-blue-100 text-blue-800' },
-      { name: 'Processes', data: item.processes || [], color: 'bg-green-100 text-green-800' },
-      { name: 'Business Model', data: item.business_model || [], color: 'bg-purple-100 text-purple-800' },
-      { name: 'Regions', data: item.regions || [], color: 'bg-orange-100 text-orange-800' },
-      { name: 'Launches', data: item.launches || [], color: 'bg-red-100 text-red-800' },
-      { name: 'Other', data: item.other || [], color: 'bg-gray-100 text-gray-800' }
+      { name: 'Products', data: item.products, color: 'bg-blue-100 text-blue-800' },
+      { name: 'Processes', data: item.processes, color: 'bg-green-100 text-green-800' },
+      { name: 'Business Model', data: item.business_model, color: 'bg-purple-100 text-purple-800' },
+      { name: 'Regions', data: item.regions, color: 'bg-orange-100 text-orange-800' },
+      { name: 'Launches', data: item.launches, color: 'bg-red-100 text-red-800' },
+      { name: 'Security Updates', data: item.security_updates, color: 'bg-yellow-100 text-yellow-800' },
+      { name: 'API Updates', data: item.api_updates, color: 'bg-indigo-100 text-indigo-800' },
+      { name: 'AA Updates', data: item.account_aggregator_updates, color: 'bg-pink-100 text-pink-800' },
+      { name: 'Other', data: item.other, color: 'bg-gray-100 text-gray-800' }
     ];
 
     return (
       <div className="space-y-3">
         {categories.map(category => {
-          if (category.data.length === 0) return null;
+          if (!category.data || !category.data.trim()) return null;
+          
+          const lines = category.data.split('\n').filter(line => line.trim());
           
           return (
             <div key={category.name}>
               <div className="flex items-center gap-2 mb-2">
                 <Badge variant="outline" className={category.color}>
-                  {category.name} ({category.data.length})
+                  {category.name} ({lines.length})
                 </Badge>
               </div>
               <div className="space-y-1 pl-4">
-                {category.data.slice(0, 2).map((entry, index) => (
+                {lines.slice(0, 2).map((line, index) => (
                   <p key={index} className="text-sm text-muted-foreground line-clamp-2">
-                    {entry.content}
+                    {line.replace(/^\d+\.\s*/, '').trim()}
                   </p>
                 ))}
-                {category.data.length > 2 && (
+                {lines.length > 2 && (
                   <p className="text-xs text-muted-foreground italic">
-                    +{category.data.length - 2} more updates...
+                    +{lines.length - 2} more updates...
                   </p>
                 )}
               </div>
@@ -143,17 +151,16 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, companies, onE
           {/* Company updates for this period */}
           <div className="ml-16 space-y-4">
             {period.items.map((item, itemIndex) => {
-              const company = companies.find(c => c.id === item.company);
               const innovationCount = getInnovationCount(item);
 
               return (
-                <Card key={item.id} className="border-l-4 border-l-primary">
+                <Card key={`${item.company_name}-${item.year}-${item.quarter}`} className="border-l-4 border-l-primary">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Building2 className="h-5 w-5 text-primary" />
                         <div>
-                          <CardTitle className="text-base">{company?.name || 'Unknown Company'}</CardTitle>
+                          <CardTitle className="text-base">{item.company_name}</CardTitle>
                           <p className="text-sm text-muted-foreground">
                             {innovationCount} innovation updates
                           </p>
@@ -163,7 +170,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, companies, onE
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => onExport([item], `${company?.name || 'company'}-${period.year}-${period.quarter}`)}
+                        onClick={() => onExport([item], `${item.company_name}-${period.year}-${period.quarter}`)}
                         className="gap-1"
                       >
                         <Download className="h-3 w-3" />

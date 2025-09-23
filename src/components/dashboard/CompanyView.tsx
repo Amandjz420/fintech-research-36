@@ -4,24 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Download, Building2, Calendar, TrendingUp } from 'lucide-react';
-import { Company, CompanyQuarterlyData } from '@/services/api';
+import { GroupedQuarterlyData } from '@/services/api';
 
 interface CompanyViewProps {
-  data: CompanyQuarterlyData[];
-  companies: Company[];
-  onExport: (data: CompanyQuarterlyData[], filename: string) => void;
+  data: GroupedQuarterlyData[];
+  onExport: (data: GroupedQuarterlyData[], filename: string) => void;
 }
 
-export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExport }) => {
+export const CompanyView: React.FC<CompanyViewProps> = ({ data, onExport }) => {
   // Group data by company
   const groupedData = React.useMemo(() => {
-    const groups = new Map<number, CompanyQuarterlyData[]>();
+    const groups = new Map<string, GroupedQuarterlyData[]>();
     
     data.forEach(item => {
-      if (!groups.has(item.company)) {
-        groups.set(item.company, []);
+      if (!groups.has(item.company_name)) {
+        groups.set(item.company_name, []);
       }
-      groups.get(item.company)!.push(item);
+      groups.get(item.company_name)!.push(item);
     });
 
     // Sort quarters within each company
@@ -36,29 +35,60 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExp
     return groups;
   }, [data]);
 
-  const getInnovationCount = (items: CompanyQuarterlyData[]) => {
+  const getInnovationCount = (items: GroupedQuarterlyData[]) => {
     return items.reduce((total, item) => {
-      return total + [
-        ...(item.products || []),
-        ...(item.processes || []),
-        ...(item.business_model || []),
-        ...(item.regions || []),
-        ...(item.launches || []),
-        ...(item.other || [])
-      ].length;
+      const categories = [
+        item.products,
+        item.processes,
+        item.business_model,
+        item.regions,
+        item.launches,
+        item.security_updates,
+        item.api_updates,
+        item.account_aggregator_updates,
+        item.other
+      ];
+
+      return total + categories.reduce((categoryTotal, category) => {
+        if (!category || !category.trim()) return categoryTotal;
+        return categoryTotal + category.split('\n').filter(line => line.trim()).length;
+      }, 0);
     }, 0);
   };
 
-  const renderCategorySection = (title: string, items: Array<{ content: string; sources: string }>) => {
-    if (!items || items.length === 0) return null;
+  const getQuarterInnovationCount = (item: GroupedQuarterlyData) => {
+    const categories = [
+      item.products,
+      item.processes,
+      item.business_model,
+      item.regions,
+      item.launches,
+      item.security_updates,
+      item.api_updates,
+      item.account_aggregator_updates,
+      item.other
+    ];
+
+    return categories.reduce((total, category) => {
+      if (!category || !category.trim()) return total;
+      return total + category.split('\n').filter(line => line.trim()).length;
+    }, 0);
+  };
+
+  const renderCategorySection = (title: string, content: string) => {
+    if (!content || !content.trim()) return null;
+
+    const lines = content.split('\n').filter(line => line.trim());
 
     return (
       <div className="mb-4">
         <h5 className="font-medium text-sm text-primary mb-2">{title}</h5>
         <div className="space-y-2">
-          {items.map((item, index) => (
+          {lines.map((line, index) => (
             <div key={index} className="pl-3 border-l-2 border-primary/20">
-              <p className="text-sm text-foreground">{item.content}</p>
+              <p className="text-sm text-foreground">
+                {line.replace(/^\d+\.\s*/, '').trim()}
+              </p>
             </div>
           ))}
         </div>
@@ -68,18 +98,17 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExp
 
   return (
     <div className="space-y-6">
-      {Array.from(groupedData.entries()).map(([companyId, quarters]) => {
-        const company = companies.find(c => c.id === companyId);
+      {Array.from(groupedData.entries()).map(([companyName, quarters]) => {
         const innovationCount = getInnovationCount(quarters);
 
         return (
-          <Card key={companyId}>
+          <Card key={companyName}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Building2 className="h-6 w-6 text-primary" />
                   <div>
-                    <CardTitle className="text-xl">{company?.name || 'Unknown Company'}</CardTitle>
+                    <CardTitle className="text-xl">{companyName}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
                       {quarters.length} quarters • {innovationCount} total innovations
                     </p>
@@ -94,7 +123,7 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExp
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onExport(quarters, `${company?.name || 'company'}-all-quarters`)}
+                    onClick={() => onExport(quarters, `${companyName}-all-quarters`)}
                     className="gap-1"
                   >
                     <Download className="h-3 w-3" />
@@ -107,14 +136,7 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExp
             <CardContent>
               <Accordion type="multiple" className="w-full">
                 {quarters.map((quarter) => {
-                  const quarterInnovations = [
-                    ...(quarter.products || []),
-                    ...(quarter.processes || []),
-                    ...(quarter.business_model || []),
-                    ...(quarter.regions || []),
-                    ...(quarter.launches || []),
-                    ...(quarter.other || [])
-                  ].length;
+                  const quarterInnovations = getQuarterInnovationCount(quarter);
 
                   return (
                     <AccordionItem key={`${quarter.year}-${quarter.quarter}`} value={`${quarter.year}-${quarter.quarter}`}>
@@ -135,7 +157,7 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExp
                             variant="ghost"
                             onClick={(e) => {
                               e.stopPropagation();
-                              onExport([quarter], `${company?.name || 'company'}-${quarter.year}-${quarter.quarter}`);
+                              onExport([quarter], `${companyName}-${quarter.year}-${quarter.quarter}`);
                             }}
                             className="gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
@@ -146,13 +168,16 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, companies, onExp
                       </AccordionTrigger>
                       
                       <AccordionContent className="pt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-7">
-                          {renderCategorySection('Products', quarter.products || [])}
-                          {renderCategorySection('Processes', quarter.processes || [])}
-                          {renderCategorySection('Business Model', quarter.business_model || [])}
-                          {renderCategorySection('Regions', quarter.regions || [])}
-                          {renderCategorySection('Launches', quarter.launches || [])}
-                          {renderCategorySection('Other', quarter.other || [])}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pl-7">
+                          {renderCategorySection('Products', quarter.products)}
+                          {renderCategorySection('Processes', quarter.processes)}
+                          {renderCategorySection('Business Model', quarter.business_model)}
+                          {renderCategorySection('Regions', quarter.regions)}
+                          {renderCategorySection('Launches', quarter.launches)}
+                          {renderCategorySection('Security Updates', quarter.security_updates)}
+                          {renderCategorySection('API Updates', quarter.api_updates)}
+                          {renderCategorySection('Account Aggregator Updates', quarter.account_aggregator_updates)}
+                          {renderCategorySection('Other', quarter.other)}
                         </div>
                       </AccordionContent>
                     </AccordionItem>

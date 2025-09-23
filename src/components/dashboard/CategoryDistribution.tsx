@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { BarChart } from 'lucide-react';
-import { CompanyQuarterlyData } from '@/services/api';
+import { GroupedQuarterlyData } from '@/services/api';
 
 interface CategoryDistributionProps {
-  data: CompanyQuarterlyData[];
+  data: GroupedQuarterlyData[];
 }
 
 export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data }) => {
@@ -18,16 +18,31 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
       business_model: 0,
       regions: 0,
       launches: 0,
+      security_updates: 0,
+      api_updates: 0,
+      account_aggregator_updates: 0,
       other: 0
     };
 
     data.forEach(item => {
-      stats.products += (item.products || []).length;
-      stats.processes += (item.processes || []).length;
-      stats.business_model += (item.business_model || []).length;
-      stats.regions += (item.regions || []).length;
-      stats.launches += (item.launches || []).length;
-      stats.other += (item.other || []).length;
+      const categories = [
+        { key: 'products', data: item.products },
+        { key: 'processes', data: item.processes },
+        { key: 'business_model', data: item.business_model },
+        { key: 'regions', data: item.regions },
+        { key: 'launches', data: item.launches },
+        { key: 'security_updates', data: item.security_updates },
+        { key: 'api_updates', data: item.api_updates },
+        { key: 'account_aggregator_updates', data: item.account_aggregator_updates },
+        { key: 'other', data: item.other }
+      ];
+
+      categories.forEach(category => {
+        if (category.data && category.data.trim()) {
+          const lines = category.data.split('\n').filter(line => line.trim());
+          stats[category.key as keyof typeof stats] += lines.length;
+        }
+      });
     });
 
     const total = Object.values(stats).reduce((sum, count) => sum + count, 0);
@@ -36,7 +51,7 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
       raw: stats,
       total,
       percentages: Object.entries(stats).map(([key, value]) => ({
-        category: key.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        category: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         count: value,
         percentage: total > 0 ? Math.round((value / total) * 100) : 0
       }))
@@ -53,7 +68,10 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
     'hsl(var(--chart-3))',
     'hsl(var(--chart-4))',
     'hsl(var(--chart-5))',
-    'hsl(var(--destructive))'
+    'hsl(var(--destructive))',
+    'hsl(var(--primary))',
+    'hsl(var(--secondary))',
+    'hsl(var(--accent))'
   ];
 
   const CustomTooltip = ({ active, payload }: any) => {
