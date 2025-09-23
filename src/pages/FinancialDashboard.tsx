@@ -7,11 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Search, Filter, RefreshCw, BarChart3, TrendingUp } from 'lucide-react';
+import { Download, Search, Filter, RefreshCw, BarChart3, TrendingUp, Home, ArrowLeft } from 'lucide-react';
 import { apiService, Company, GroupedQuarterlyData } from '@/services/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters';
 import { DataTableView } from '@/components/dashboard/DataTableView';
 import { CompanyView } from '@/components/dashboard/CompanyView';
@@ -31,6 +32,7 @@ const FinancialDashboard = () => {
   const [activeView, setActiveView] = useState<'table' | 'company' | 'timeline'>('table');
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch companies for filter dropdown
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
@@ -148,15 +150,38 @@ const FinancialDashboard = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Financial Innovation Dashboard</h1>
-          <p className="text-muted-foreground">
-            Track and analyze fintech innovation across companies and quarters
-          </p>
+      <div className="flex flex-col gap-4">
+        {/* Navigation breadcrumb */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/')}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Homepage
+          </Button>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-sm font-medium">Financial Innovation Dashboard</span>
         </div>
         
-        <div className="flex items-center gap-2">
+        {/* Main header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <BarChart3 className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Financial Innovation Dashboard</h1>
+              <p className="text-muted-foreground">
+                Track and analyze fintech innovation across companies and quarters
+              </p>
+          </div>
+        </div>
+      </div>
+          
+          <div className="flex items-center gap-2">
           <Button 
             onClick={() => exportToCSV(quarterlyData, 'all-quarterly-data')}
             className="gap-2"
