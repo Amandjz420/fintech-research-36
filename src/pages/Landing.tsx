@@ -8,7 +8,7 @@ import CompanyCard from '../components/CompanyCard';
 import CompanyListItem from '../components/CompanyListItem';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import { Search, Grid3X3, List } from 'lucide-react';
+import { Search, Grid3X3, List, BarChart3, TrendingUp, ArrowRight } from 'lucide-react';
 
 const Landing = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -80,7 +80,53 @@ const Landing = () => {
             Explore detailed analytics and insights for companies in our database
           </p>
           
-          <div className="flex flex-col items-center gap-4 mb-8">
+          {/* Navigation Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto mb-8">
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 p-6 rounded-lg border border-primary/20">
+              <div className="flex items-center justify-center mb-4">
+                <BarChart3 className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Financial Innovation Dashboard
+              </h3>
+              <p className="text-gray-600 mb-4 text-sm">
+                Comprehensive quarterly analysis, filtering, and data visualization for financial innovation tracking
+              </p>
+              <Button 
+                onClick={() => navigate('/dashboard')}
+                className="w-full group"
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Access Dashboard
+                <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
+            
+            <div className="bg-gradient-to-br from-secondary/5 to-secondary/10 p-6 rounded-lg border border-secondary/20">
+              <div className="flex items-center justify-center mb-4">
+                <Search className="h-8 w-8 text-secondary-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Company Explorer
+              </h3>
+              <p className="text-gray-600 mb-4 text-sm">
+                Browse and search through our comprehensive database of fintech companies
+              </p>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  const searchSection = document.getElementById('company-search');
+                  searchSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full"
+              >
+                Explore Companies
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+          
+          <div id="company-search" className="flex flex-col items-center gap-4 mb-8">
             <div className="max-w-md w-full">
               <div className="relative">
                 <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
