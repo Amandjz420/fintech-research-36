@@ -4,6 +4,7 @@ import { Progress } from '@/components/ui/progress';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { BarChart } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
+import { CATEGORY_COLORS } from './InnovationHeatmap';
 
 interface CategoryDistributionProps {
   data: GroupedQuarterlyData[];
@@ -61,18 +62,11 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
   // Data for pie chart
   const pieData = categoryStats.percentages.filter(item => item.count > 0);
 
-  // Colors for categories
-  const colors = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-    'hsl(var(--destructive))',
-    'hsl(var(--primary))',
-    'hsl(var(--secondary))',
-    'hsl(var(--accent))'
-  ];
+  // Colors for categories - map to our consistent color scheme
+  const getCategoryColor = (categoryName: string) => {
+    const key = categoryName.toLowerCase().replace(/\s+/g, '_');
+    return CATEGORY_COLORS[key as keyof typeof CATEGORY_COLORS] || CATEGORY_COLORS.other;
+  };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -110,7 +104,7 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
                   <div className="flex items-center gap-2">
                     <div 
                       className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: colors[index] }}
+                      style={{ backgroundColor: getCategoryColor(item.category) }}
                     />
                     <span className="text-sm font-medium">{item.category}</span>
                   </div>
@@ -122,7 +116,7 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
                   value={item.percentage} 
                   className="h-2"
                   style={{ 
-                    '--progress-background': colors[index] 
+                    '--progress-background': getCategoryColor(item.category)
                   } as React.CSSProperties}
                 />
               </div>
@@ -144,7 +138,7 @@ export const CategoryDistribution: React.FC<CategoryDistributionProps> = ({ data
                     dataKey="count"
                   >
                     {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={colors[index]} />
+                      <Cell key={`cell-${index}`} fill={getCategoryColor(entry.category)} />
                     ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />

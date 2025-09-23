@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Clock, Building2, Calendar } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
+import { CATEGORY_COLORS } from './InnovationHeatmap';
 
 interface TimelineViewProps {
   data: GroupedQuarterlyData[];
@@ -64,15 +65,15 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
 
   const renderInnovationSummary = (item: GroupedQuarterlyData) => {
     const categories = [
-      { name: 'Products', data: item.products, color: 'bg-blue-100 text-blue-800' },
-      { name: 'Processes', data: item.processes, color: 'bg-green-100 text-green-800' },
-      { name: 'Business Model', data: item.business_model, color: 'bg-purple-100 text-purple-800' },
-      { name: 'Regions', data: item.regions, color: 'bg-orange-100 text-orange-800' },
-      { name: 'Launches', data: item.launches, color: 'bg-red-100 text-red-800' },
-      { name: 'Security Updates', data: item.security_updates, color: 'bg-yellow-100 text-yellow-800' },
-      { name: 'API Updates', data: item.api_updates, color: 'bg-indigo-100 text-indigo-800' },
-      { name: 'AA Updates', data: item.account_aggregator_updates, color: 'bg-pink-100 text-pink-800' },
-      { name: 'Other', data: item.other, color: 'bg-gray-100 text-gray-800' }
+      { name: 'Products', data: item.products, key: 'products' },
+      { name: 'Processes', data: item.processes, key: 'processes' },
+      { name: 'Business Model', data: item.business_model, key: 'business_model' },
+      { name: 'Regions', data: item.regions, key: 'regions' },
+      { name: 'Launches', data: item.launches, key: 'launches' },
+      { name: 'Security Updates', data: item.security_updates, key: 'security_updates' },
+      { name: 'API Updates', data: item.api_updates, key: 'api_updates' },
+      { name: 'AA Updates', data: item.account_aggregator_updates, key: 'account_aggregator_updates' },
+      { name: 'Other', data: item.other, key: 'other' }
     ];
 
     return (
@@ -85,7 +86,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
           return (
             <div key={category.name}>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline" className={category.color}>
+                <Badge 
+                  variant="outline" 
+                  style={{
+                    backgroundColor: `${CATEGORY_COLORS[category.key as keyof typeof CATEGORY_COLORS]}15`,
+                    borderColor: CATEGORY_COLORS[category.key as keyof typeof CATEGORY_COLORS],
+                    color: CATEGORY_COLORS[category.key as keyof typeof CATEGORY_COLORS]
+                  }}
+                >
                   {category.name} ({lines.length})
                 </Badge>
               </div>

@@ -4,6 +4,19 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
 
+// Category color mapping for consistency across the app
+export const CATEGORY_COLORS = {
+  products: 'hsl(220, 70%, 50%)',       // Blue
+  processes: 'hsl(142, 71%, 45%)',      // Green  
+  business_model: 'hsl(262, 83%, 58%)', // Purple
+  regions: 'hsl(25, 95%, 53%)',         // Orange
+  launches: 'hsl(0, 84%, 60%)',         // Red
+  security_updates: 'hsl(48, 96%, 53%)', // Yellow
+  api_updates: 'hsl(221, 83%, 53%)',    // Indigo
+  account_aggregator_updates: 'hsl(314, 65%, 60%)', // Pink
+  other: 'hsl(215, 25%, 27%)'           // Gray
+};
+
 interface InnovationHeatmapProps {
   data: GroupedQuarterlyData[];
 }
@@ -102,29 +115,26 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
 
           {/* Heatmap */}
           <div className="overflow-x-auto">
-            <div className="min-w-fit">
+            <div className="min-w-[800px]">
               {/* Year headers */}
               <div className="flex mb-2">
-                <div className="w-32 flex-shrink-0"></div>
+                <div className="w-40 flex-shrink-0"></div>
                 {heatmapData.years.map(year => (
-                  <div key={year} className="flex">
-                    <div className="w-20 text-center text-sm font-medium text-muted-foreground mb-1">
+                  <div key={year} className="grid grid-cols-4 gap-1 flex-1">
+                    <div className="col-span-4 text-center text-sm font-medium text-muted-foreground border-b pb-1 mb-2">
                       {year}
                     </div>
-                    <div className="w-20"></div>
-                    <div className="w-20"></div>
-                    <div className="w-20"></div>
                   </div>
                 ))}
               </div>
 
               {/* Quarter headers */}
-              <div className="flex mb-2">
-                <div className="w-32 flex-shrink-0"></div>
+              <div className="flex mb-4">
+                <div className="w-40 flex-shrink-0"></div>
                 {heatmapData.years.map(year => (
-                  <div key={`quarters-${year}`} className="flex">
+                  <div key={`quarters-${year}`} className="grid grid-cols-4 gap-1 flex-1">
                     {heatmapData.quarters.map(quarter => (
-                      <div key={`${year}-${quarter}`} className="w-20 text-center text-xs text-muted-foreground">
+                      <div key={`${year}-${quarter}`} className="text-center text-xs text-muted-foreground font-medium">
                         {quarter}
                       </div>
                     ))}
@@ -133,34 +143,36 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
               </div>
 
               {/* Company rows */}
-              {heatmapData.companies.map(company => (
-                <div key={company} className="flex items-center mb-1">
-                  <div className="w-32 flex-shrink-0 pr-4">
-                    <div className="text-sm font-medium truncate" title={company}>
-                      {company}
+              <div className="space-y-2">
+                {heatmapData.companies.map(company => (
+                  <div key={company} className="flex items-center">
+                    <div className="w-40 flex-shrink-0 pr-4">
+                      <div className="text-sm font-medium truncate" title={company}>
+                        {company}
+                      </div>
                     </div>
+                    {heatmapData.years.map(year => (
+                      <div key={`${company}-${year}`} className="grid grid-cols-4 gap-1 flex-1">
+                        {heatmapData.quarters.map(quarter => {
+                          const key = `${company}-${year}-${quarter.toLowerCase()}`;
+                          const count = heatmapData.matrix.get(key) || 0;
+                          return (
+                            <div
+                              key={key}
+                              className={`h-8 rounded-sm ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-sm border border-border/50`}
+                              title={`${company} - ${quarter} ${year}: ${count} innovations`}
+                            >
+                              <span className="text-xs font-medium text-foreground">
+                                {count > 0 ? count : ''}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
-                  {heatmapData.years.map(year => (
-                    <div key={`${company}-${year}`} className="flex gap-1">
-                      {heatmapData.quarters.map(quarter => {
-                        const key = `${company}-${year}-${quarter.toLowerCase()}`;
-                        const count = heatmapData.matrix.get(key) || 0;
-                        return (
-                          <div
-                            key={key}
-                            className={`w-18 h-6 rounded-sm ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-110`}
-                            title={`${company} - ${quarter} ${year}: ${count} innovations`}
-                          >
-                            <span className="text-xs font-medium text-foreground">
-                              {count > 0 ? count : ''}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
