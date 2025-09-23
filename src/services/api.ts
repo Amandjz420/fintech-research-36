@@ -414,5 +414,29 @@ export const apiService = {
       console.error('Error fetching yearly updates:', error);
       throw error;
     }
+  },
+
+  async getGroupedQuarterlyData(filters?: {
+    company_id?: number;
+    year?: number;
+    quarter?: string;
+  }): Promise<CompanyQuarterlyData[]> {
+    try {
+      const params = new URLSearchParams();
+      if (filters?.company_id) params.append('company_id', filters.company_id.toString());
+      if (filters?.year) params.append('year', filters.year.toString());
+      if (filters?.quarter) params.append('quarter', filters.quarter);
+
+      const url = `${API_BASE_URL}/api/grouped-quarterly-data/${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch grouped quarterly data');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching grouped quarterly data:', error);
+      throw error;
+    }
   }
 };

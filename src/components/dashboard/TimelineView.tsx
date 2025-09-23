@@ -1,0 +1,197 @@
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Download, Clock, Building2, Calendar } from 'lucide-react';
+import { Company, CompanyQuarterlyData } from '@/services/api';
+
+interface TimelineViewProps {
+  data: CompanyQuarterlyData[];
+  companies: Company[];
+  onExport: (data: CompanyQuarterlyData[], filename: string) => void;
+}
+
+export const TimelineView: React.FC<TimelineViewProps> = ({ data, companies, onExport }) => {
+  // Sort data chronologically (newest first)
+  const sortedData = React.useMemo(() => {
+    return [...data].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      const quarterOrder = { q4: 4, q3: 3, q2: 2, q1: 1 };
+      return quarterOrder[b.quarter as keyof typeof quarterOrder] - quarterOrder[a.quarter as keyof typeof quarterOrder];
+    });
+  }, [data]);
+
+  // Group by year and quarter for timeline structure
+  const timelineData = React.useMemo(() => {
+    const timeline = new Map<string, CompanyQuarterlyData[]>();
+    
+    sortedData.forEach(item => {
+      const key = `${item.year}-${item.quarter}`;
+      if (!timeline.has(key)) {
+        timeline.set(key, []);
+      }
+      timeline.get(key)!.push(item);
+    });
+
+    return Array.from(timeline.entries()).map(([key, items]) => {
+      const [year, quarter] = key.split('-');
+      return {
+        year: parseInt(year),
+        quarter,
+        items: items.sort((a, b) => {
+          const companyA = companies.find(c => c.id === a.company)?.name || '';
+          const companyB = companies.find(c => c.id === b.company)?.name || '';
+          return companyA.localeCompare(companyB);
+        })
+      };
+    });
+  }, [sortedData, companies]);
+
+  const getInnovationCount = (item: CompanyQuarterlyData) => {
+    return [
+      ...(item.products || []),
+      ...(item.processes || []),
+      ...(item.business_model || []),
+      ...(item.regions || []),
+      ...(item.launches || []),
+      ...(item.other || [])
+    ].length;
+  };
+
+  const renderInnovationSummary = (item: CompanyQuarterlyData) => {
+    const categories = [
+      { name: 'Products', data: item.products || [], color: 'bg-blue-100 text-blue-800' },
+      { name: 'Processes', data: item.processes || [], color: 'bg-green-100 text-green-800' },
+      { name: 'Business Model', data: item.business_model || [], color: 'bg-purple-100 text-purple-800' },
+      { name: 'Regions', data: item.regions || [], color: 'bg-orange-100 text-orange-800' },
+      { name: 'Launches', data: item.launches || [], color: 'bg-red-100 text-red-800' },
+      { name: 'Other', data: item.other || [], color: 'bg-gray-100 text-gray-800' }
+    ];
+
+    return (
+      <div className="space-y-3">
+        {categories.map(category => {
+          if (category.data.length === 0) return null;
+          
+          return (
+            <div key={category.name}>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className={category.color}>
+                  {category.name} ({category.data.length})
+                </Badge>
+              </div>
+              <div className="space-y-1 pl-4">
+                {category.data.slice(0, 2).map((entry, index) => (
+                  <p key={index} className="text-sm text-muted-foreground line-clamp-2">
+                    {entry.content}
+                  </p>
+                ))}
+                {category.data.length > 2 && (
+                  <p className="text-xs text-muted-foreground italic">
+                    +{category.data.length - 2} more updates...
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+        <Clock className="h-4 w-4" />
+        <span>Showing {sortedData.length} records in chronological order</span>
+      </div>
+
+      {timelineData.map((period, periodIndex) => (
+        <div key={`${period.year}-${period.quarter}`} className="relative">
+          {/* Timeline line */}
+          {periodIndex < timelineData.length - 1 && (
+            <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-border" />
+          )}
+          
+          {/* Period header */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative z-10 flex items-center justify-center w-12 h-12 bg-primary text-primary-foreground rounded-full">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div className="flex items-center justify-between flex-1">
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {period.quarter.toUpperCase()} {period.year}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {period.items.length} companies with updates
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onExport(period.items, `timeline-${period.year}-${period.quarter}`)}
+                className="gap-1"
+              >
+                <Download className="h-3 w-3" />
+                Export Period
+              </Button>
+            </div>
+          </div>
+
+          {/* Company updates for this period */}
+          <div className="ml-16 space-y-4">
+            {period.items.map((item, itemIndex) => {
+              const company = companies.find(c => c.id === item.company);
+              const innovationCount = getInnovationCount(item);
+
+              return (
+                <Card key={item.id} className="border-l-4 border-l-primary">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Building2 className="h-5 w-5 text-primary" />
+                        <div>
+                          <CardTitle className="text-base">{company?.name || 'Unknown Company'}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {innovationCount} innovation updates
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => onExport([item], `${company?.name || 'company'}-${period.year}-${period.quarter}`)}
+                        className="gap-1"
+                      >
+                        <Download className="h-3 w-3" />
+                        Export
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  
+                  <CardContent>
+                    {renderInnovationSummary(item)}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {periodIndex < timelineData.length - 1 && (
+            <Separator className="my-8 ml-16" />
+          )}
+        </div>
+      ))}
+
+      {timelineData.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <p>No timeline data found matching the current filters.</p>
+        </div>
+      )}
+    </div>
+  );
+};
