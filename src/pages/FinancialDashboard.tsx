@@ -87,37 +87,50 @@ const FinancialDashboard = () => {
 
   // Export functions
   const exportToCSV = (data: GroupedQuarterlyData[], filename: string) => {
-    const headers = ['Company', 'Year', 'Quarter', 'Category', 'Content'];
+    const headers = [
+      'Company_name', 'year', 'quarter', 'products', 'processes', 'business_model',
+      'regions', 'launches', 'security_updates', 'api_updates', 'account_aggregator_updates', 'other'
+    ];
     const rows = [headers];
 
     data.forEach(item => {
-      const categories = [
-        { name: 'Products', data: item.products },
-        { name: 'Processes', data: item.processes },
-        { name: 'Business Model', data: item.business_model },
-        { name: 'Regions', data: item.regions },
-        { name: 'Launches', data: item.launches },
-        { name: 'Security Updates', data: item.security_updates },
-        { name: 'API Updates', data: item.api_updates },
-        { name: 'Account Aggregator Updates', data: item.account_aggregator_updates },
-        { name: 'Other', data: item.other }
+      const formatCategoryData = (categoryData: any) => {
+        if (!categoryData) return '';
+        
+        // If it's already a string, return as is
+        if (typeof categoryData === 'string') {
+          return categoryData;
+        }
+        
+        // If it's an array with content/sources structure
+        if (Array.isArray(categoryData)) {
+          return categoryData
+            .map((item, index) => {
+              const content = typeof item === 'object' && item.content ? item.content : item;
+              return `${index + 1}. ${content}`;
+            })
+            .join('\n');
+        }
+        
+        return categoryData.toString();
+      };
+
+      const row = [
+        item.company_name,
+        item.year.toString(),
+        item.quarter.toUpperCase(),
+        formatCategoryData(item.products),
+        formatCategoryData(item.processes),
+        formatCategoryData(item.business_model),
+        formatCategoryData(item.regions),
+        formatCategoryData(item.launches),
+        formatCategoryData(item.security_updates),
+        formatCategoryData(item.api_updates),
+        formatCategoryData(item.account_aggregator_updates),
+        formatCategoryData(item.other)
       ];
 
-      categories.forEach(category => {
-        if (category.data && category.data.trim()) {
-          // Split by numbered lines and clean up
-          const lines = category.data.split('\n').filter(line => line.trim());
-          lines.forEach(line => {
-            rows.push([
-              item.company_name,
-              item.year.toString(),
-              item.quarter.toUpperCase(),
-              category.name,
-              line.replace(/^\d+\.\s*/, '').trim() // Remove numbering
-            ]);
-          });
-        }
-      });
+      rows.push(row);
     });
 
     const csvContent = rows.map(row => 
