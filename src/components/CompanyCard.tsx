@@ -19,6 +19,11 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
     return new Date(dateString).getFullYear();
   };
 
+  const truncateDescription = (text: string, maxLength: number = 150) => {
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength).trim() + '...';
+  };
+
   return (
     <div
       onClick={handleClick}
@@ -41,7 +46,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company }) => {
         )}
       </div>
       
-      <p className="text-gray-600 mb-4 line-clamp-3">{company.description}</p>
+      <p className="text-muted-foreground mb-4 leading-relaxed">{truncateDescription(company.description)}</p>
       
       <div className="flex items-center text-sm text-gray-500">
         <Calendar size={16} className="mr-2" />
