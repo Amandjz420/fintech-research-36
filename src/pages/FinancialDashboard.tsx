@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,6 +34,13 @@ const FinancialDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if admin mode is enabled via query parameter
+  const isAdminMode = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('admin') === 'true';
+  }, [location.search]);
 
   // Fetch companies for filter dropdown
   const { data: companies = [], isLoading: companiesLoading } = useQuery({
@@ -296,7 +304,7 @@ const FinancialDashboard = () => {
 
       {/* Data Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <InnovationHeatmap data={filteredData} />
+        <InnovationHeatmap data={filteredData} isAdminMode={isAdminMode} />
         <CategoryDistribution data={filteredData} />
       </div>
 
