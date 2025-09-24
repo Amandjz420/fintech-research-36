@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { TrendingUp } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
 
@@ -142,46 +143,46 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
                 ))}
               </div>
 
-              {/* Company rows */}
-              <div className="space-y-3">
-                {heatmapData.companies.slice(0, 15).map(company => (
-                  <div key={company} className="flex items-center">
-                    <div className="w-48 flex-shrink-0 pr-4">
-                      <div className="text-sm font-medium text-foreground" title={company}>
-                        {company.length > 20 ? `${company.slice(0, 20)}...` : company}
+              {/* Company rows - Scrollable */}
+              <ScrollArea className="h-[600px] w-full">
+                <div className="space-y-3 pr-4">
+                  {heatmapData.companies.map(company => (
+                    <div key={company} className="flex items-center">
+                      <div className="w-48 flex-shrink-0 pr-4">
+                        <div className="text-sm font-medium text-foreground" title={company}>
+                          {company.length > 20 ? `${company.slice(0, 20)}...` : company}
+                        </div>
                       </div>
+                      {heatmapData.years.map(year => (
+                        <div key={`${company}-${year}`} className="w-80 grid grid-cols-4 gap-2">
+                          {heatmapData.quarters.map(quarter => {
+                            const key = `${company}-${year}-${quarter.toLowerCase()}`;
+                            const count = heatmapData.matrix.get(key) || 0;
+                            return (
+                              <div
+                                key={key}
+                                className={`h-12 w-full rounded-md ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-md border border-border/50 hover:border-primary/50`}
+                                title={`${company} - ${quarter.toUpperCase()} ${year}: ${count} innovations`}
+                              >
+                                <span className="text-sm font-semibold text-foreground">
+                                  {count > 0 ? count : ''}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
-                    {heatmapData.years.map(year => (
-                      <div key={`${company}-${year}`} className="w-80 grid grid-cols-4 gap-2">
-                        {heatmapData.quarters.map(quarter => {
-                          const key = `${company}-${year}-${quarter.toLowerCase()}`;
-                          const count = heatmapData.matrix.get(key) || 0;
-                          return (
-                            <div
-                              key={key}
-                              className={`h-12 w-full rounded-md ${getIntensityClass(count)} flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-md border border-border/50 hover:border-primary/50`}
-                              title={`${company} - ${quarter.toUpperCase()} ${year}: ${count} innovations`}
-                            >
-                              <span className="text-sm font-semibold text-foreground">
-                                {count > 0 ? count : ''}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-
-              {/* Show more indicator if there are more companies */}
-              {heatmapData.companies.length > 15 && (
-                <div className="mt-6 text-center">
-                  <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                    Showing top 15 companies. Total: {heatmapData.companies.length} companies
-                  </div>
+                  ))}
                 </div>
-              )}
+              </ScrollArea>
+
+              {/* Total companies info */}
+              <div className="mt-4 text-center">
+                <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
+                  Showing all {heatmapData.companies.length} companies. Scroll to view more.
+                </div>
+              </div>
             </div>
           </div>
 
@@ -193,9 +194,9 @@ export const InnovationHeatmap: React.FC<InnovationHeatmapProps> = ({ data }) =>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
-                {Math.min(15, heatmapData.companies.length)}
+                {heatmapData.companies.length}
               </div>
-              <div className="text-sm text-muted-foreground">Companies shown</div>
+              <div className="text-sm text-muted-foreground">Total companies</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-primary">
