@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download, Play } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Calendar, BarChart3, Package, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { GroupedEntriesResponse, CompanyQuarterlyData, Company, apiService } from '../services/api';
 import YearAccordion from '../components/YearAccordion';
@@ -29,9 +29,6 @@ const CompanyDetail = () => {
   const [selectedYear, setSelectedYear] = useState<number | null>(2024);
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [quarterlyData, setQuarterlyData] = useState<CompanyQuarterlyData[]>([]);
-  const [fetchYear, setFetchYear] = useState<number>(new Date().getFullYear());
-  const [fetchMonth, setFetchMonth] = useState<number>(1);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchData = async () => {
     console.log('fetchData called with companyId:', companyId);
@@ -128,26 +125,6 @@ const CompanyDetail = () => {
     }
   };
 
-  const handleFetchYearlyUpdates = async () => {
-    if (!companyId) return;
-    
-    setIsProcessing(true);
-    try {
-      await apiService.fetchYearlyUpdates(parseInt(companyId), fetchYear, fetchMonth);
-      toast({
-        title: "Processing Started",
-        description: `Yearly updates processing has been initiated for ${fetchYear} starting from month ${fetchMonth}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start yearly updates processing",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const downloadCompanyQuarterlyPDF = (data: CompanyQuarterlyData[], companyName: string, year: number, quarter: string) => {
     const pdf = new jsPDF();
@@ -426,58 +403,6 @@ const CompanyDetail = () => {
           </Card>
         )}
 
-        {/* Fetch Yearly Updates Section */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Play className="h-5 w-5" />
-              Fetch Yearly Updates
-            </CardTitle>
-            <CardDescription>
-              Process yearly updates for this company by selecting a year and starting month
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Year</label>
-                <Select value={fetchYear.toString()} onValueChange={(value) => setFetchYear(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: new Date().getFullYear() - 2013 }, (_, i) => 2014 + i).map(year => (
-                      <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Starting Month</label>
-                <Select value={fetchMonth.toString()} onValueChange={(value) => setFetchMonth(parseInt(value))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
-                      <SelectItem key={month} value={month.toString()}>
-                        {new Date(0, month - 1).toLocaleString('default', { month: 'long' })}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button 
-                onClick={handleFetchYearlyUpdates}
-                disabled={isProcessing}
-                className="flex items-center gap-2"
-              >
-                <Play className="h-4 w-4" />
-                {isProcessing ? 'Processing...' : 'Start Processing'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Quarterly Analysis Section */}
         <div className="mb-8">
