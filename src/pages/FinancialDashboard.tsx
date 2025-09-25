@@ -109,7 +109,7 @@ const FinancialDashboard = () => {
               const content = typeof item === 'object' && item.content ? item.content : item;
               return `${index + 1}. ${content}`;
             })
-            .join('\n');
+            .join(' | '); // Use pipe separator instead of newlines for Excel compatibility
         }
         
         return categoryData.toString();
@@ -133,11 +133,22 @@ const FinancialDashboard = () => {
       rows.push(row);
     });
 
+    // Properly escape fields for Excel compatibility
     const csvContent = rows.map(row => 
-      row.map(field => `"${field.toString().replace(/"/g, '""')}"`).join(',')
-    ).join('\n');
+      row.map(field => {
+        const fieldStr = field.toString()
+          .replace(/"/g, '""') // Escape double quotes
+          .replace(/\r?\n/g, ' | '); // Replace newlines with pipe separator
+        return `"${fieldStr}"`; // Always wrap in quotes for Excel
+      }).join(',')
+    ).join('\r\n'); // Use Windows line endings for Excel
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Add UTF-8 BOM for Excel compatibility
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { 
+      type: 'text/csv;charset=utf-8;' 
+    });
+    
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `${filename}.csv`;
@@ -145,7 +156,7 @@ const FinancialDashboard = () => {
     
     toast({
       title: "Export Successful",
-      description: `Data exported to ${filename}.csv`,
+      description: `Data exported to ${filename}.csv (Excel-ready format)`,
     });
   };
 
