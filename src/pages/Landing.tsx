@@ -302,26 +302,6 @@ const Landing = () => {
 
               {(queryResult || queryLoading) && (
                 <div className="mt-4 space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg border border-border">
-                    <h4 className="font-semibold mb-2 text-sm">Query Details:</h4>
-                    <div className="space-y-1 text-sm">
-                      <p><span className="font-medium">Original Question:</span> {queryText}</p>
-                      <p><span className="font-medium">Selected Companies:</span> {
-                        companies
-                          .filter(c => selectedCompanyIds.includes(c.id))
-                          .map(c => c.name)
-                          .sort()
-                          .join(', ')
-                      }</p>
-                      <p><span className="font-medium">Enhanced Query:</span> {queryText}?? search for the companies: {
-                        companies
-                          .filter(c => selectedCompanyIds.includes(c.id))
-                          .map(c => c.name)
-                          .sort()
-                          .join(' and ')
-                      }</p>
-                    </div>
-                  </div>
                   
                   {queryResult && (
                     <>
