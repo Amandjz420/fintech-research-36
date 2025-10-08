@@ -8,13 +8,14 @@ import CompanyCard from '../components/CompanyCard';
 import CompanyListItem from '../components/CompanyListItem';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import { Search, Grid3X3, List, BarChart3, TrendingUp, ArrowRight, Sparkles, Send } from 'lucide-react';
+import { Search, Grid3X3, List, BarChart3, TrendingUp, ArrowRight, Sparkles, Send, X } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 const Landing = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -262,23 +263,29 @@ const Landing = () => {
                     )}
                   </div>
                 </ScrollArea>
+                {selectedCompanyIds.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {companies
+                      .filter(c => selectedCompanyIds.includes(c.id))
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map(company => (
+                        <Badge 
+                          key={company.id} 
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          onClick={() => handleCompanyToggle(company.id)}
+                        >
+                          {company.name}
+                          <X className="h-3 w-3 ml-1" />
+                        </Badge>
+                      ))}
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground mt-2">
-                  {selectedCompanyIds.length === 0 ? (
-                    'Please select at least one company'
-                  ) : (
-                    <>
-                      {selectedCompanyIds.length} {selectedCompanyIds.length === 1 ? 'company' : 'companies'} selected
-                      {selectedCompanyIds.length > 0 && (
-                        <span className="block mt-1 font-medium">
-                          Selected: {companies
-                            .filter(c => selectedCompanyIds.includes(c.id))
-                            .map(c => c.name)
-                            .sort()
-                            .join(', ')}
-                        </span>
-                      )}
-                    </>
-                  )}
+                  {selectedCompanyIds.length === 0 
+                    ? 'Please select at least one company'
+                    : `${selectedCompanyIds.length} ${selectedCompanyIds.length === 1 ? 'company' : 'companies'} selected`
+                  }
                 </p>
               </div>
 
