@@ -335,33 +335,6 @@ const Landing = () => {
                         </div>
                       )}
 
-                      {queryResult.tool_calls && queryResult.tool_calls.length > 0 && (
-                        <div className="p-4 bg-muted rounded-lg border border-border">
-                          <h4 className="font-semibold mb-3 text-sm">Tool Calls ({queryResult.tool_calls.length})</h4>
-                          <div className="space-y-3">
-                            {queryResult.tool_calls.map((tool, index) => (
-                              <div key={index} className="p-3 bg-background rounded border border-border">
-                                <p className="font-medium text-sm mb-2">Function: {tool.function}</p>
-                                {tool.arguments && Object.keys(tool.arguments).length > 0 && (
-                                  <div className="mb-2">
-                                    <p className="text-xs text-muted-foreground mb-1">Arguments:</p>
-                                    <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
-                                      {JSON.stringify(tool.arguments, null, 2)}
-                                    </pre>
-                                  </div>
-                                )}
-                                {tool.result && (
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">
-                                      Results: {Array.isArray(tool.result) ? `${tool.result.length} items found` : 'See details below'}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
 
                       <div className="p-3 bg-muted/50 rounded-lg border border-border">
                         <p className="text-xs text-muted-foreground">
