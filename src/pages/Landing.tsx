@@ -30,6 +30,7 @@ const Landing = () => {
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>([]);
   const [queryLoading, setQueryLoading] = useState(false);
   const [queryResult, setQueryResult] = useState<string | null>(null);
+  const [companySearchTerm, setCompanySearchTerm] = useState('');
 
   const fetchCompanies = async () => {
     try {
@@ -75,13 +76,18 @@ const Landing = () => {
       return;
     }
 
+    if (selectedCompanyIds.length === 0) {
+      toast.error('Please select at least one company');
+      return;
+    }
+
     setQueryLoading(true);
     setQueryResult(null);
 
     try {
       const result = await apiService.intelligentQuery(
         queryText, 
-        selectedCompanyIds.length > 0 ? selectedCompanyIds : undefined
+        selectedCompanyIds
       );
       setQueryResult(result.result);
       toast.success('Query executed successfully');
@@ -92,6 +98,16 @@ const Landing = () => {
       setQueryLoading(false);
     }
   };
+
+  // Sort companies alphabetically
+  const sortedCompanies = [...companies].sort((a, b) => 
+    a.name.localeCompare(b.name)
+  );
+
+  // Filter companies for the intelligent query section
+  const filteredCompaniesForQuery = sortedCompanies.filter(company =>
+    company.name.toLowerCase().includes(companySearchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -194,31 +210,59 @@ const Landing = () => {
               </div>
               
               <div>
-                <Label className="mb-2 block">Filter by Companies (Optional)</Label>
+                <Label className="mb-2 block">Select Companies <span className="text-destructive">*</span></Label>
+                <div className="mb-2">
+                  <Input
+                    type="text"
+                    placeholder="Search companies..."
+                    value={companySearchTerm}
+                    onChange={(e) => setCompanySearchTerm(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
                 <ScrollArea className="h-48 border rounded-md p-4">
                   <div className="space-y-3">
-                    {companies.map((company) => (
-                      <div key={company.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`company-${company.id}`}
-                          checked={selectedCompanyIds.includes(company.id)}
-                          onCheckedChange={() => handleCompanyToggle(company.id)}
-                        />
-                        <Label
-                          htmlFor={`company-${company.id}`}
-                          className="text-sm font-normal cursor-pointer"
-                        >
-                          {company.name}
-                        </Label>
-                      </div>
-                    ))}
+                    {filteredCompaniesForQuery.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        No companies found
+                      </p>
+                    ) : (
+                      filteredCompaniesForQuery.map((company) => (
+                        <div key={company.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`company-${company.id}`}
+                            checked={selectedCompanyIds.includes(company.id)}
+                            onCheckedChange={() => handleCompanyToggle(company.id)}
+                          />
+                          <Label
+                            htmlFor={`company-${company.id}`}
+                            className="text-sm font-normal cursor-pointer"
+                          >
+                            {company.name}
+                          </Label>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
-                {selectedCompanyIds.length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {selectedCompanyIds.length} {selectedCompanyIds.length === 1 ? 'company' : 'companies'} selected
-                  </p>
-                )}
+                <p className="text-sm text-muted-foreground mt-2">
+                  {selectedCompanyIds.length === 0 ? (
+                    'Please select at least one company'
+                  ) : (
+                    <>
+                      {selectedCompanyIds.length} {selectedCompanyIds.length === 1 ? 'company' : 'companies'} selected
+                      {selectedCompanyIds.length > 0 && (
+                        <span className="block mt-1 font-medium">
+                          Selected: {companies
+                            .filter(c => selectedCompanyIds.includes(c.id))
+                            .map(c => c.name)
+                            .sort()
+                            .join(', ')}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </p>
               </div>
 
               <Button 
@@ -239,14 +283,33 @@ const Landing = () => {
                 )}
               </Button>
 
-              {queryResult && (
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
-                    Result:
-                  </h4>
-                  <p className="text-sm whitespace-pre-wrap">{queryResult}</p>
-                </div>
+              {(queryResult || queryLoading) && (
+                <>
+                  <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+                    <h4 className="font-semibold mb-2 text-sm">Query Details:</h4>
+                    <div className="space-y-1 text-sm">
+                      <p><span className="font-medium">Question:</span> {queryText}</p>
+                      <p><span className="font-medium">Companies:</span> {
+                        companies
+                          .filter(c => selectedCompanyIds.includes(c.id))
+                          .map(c => c.name)
+                          .sort()
+                          .join(', ')
+                      }</p>
+                      <p><span className="font-medium">Company IDs:</span> [{selectedCompanyIds.join(', ')}]</p>
+                    </div>
+                  </div>
+                  
+                  {queryResult && (
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <Sparkles className="h-4 w-4" />
+                        Result:
+                      </h4>
+                      <p className="text-sm whitespace-pre-wrap">{queryResult}</p>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
