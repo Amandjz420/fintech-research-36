@@ -171,6 +171,12 @@ export interface CompanyQuarterlyData {
   company: number;
 }
 
+export interface IntelligentQueryResponse {
+  query: string;
+  result: string;
+  companies_mentioned?: string[];
+}
+
 export const apiService = {
   async getCompanies(): Promise<Company[]> {
     try {
@@ -459,6 +465,28 @@ export const apiService = {
       return data;
     } catch (error) {
       console.error('Error fetching grouped quarterly data:', error);
+      throw error;
+    }
+  },
+
+  async intelligentQuery(query: string, companyIds?: number[]): Promise<IntelligentQueryResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/intelligent-query/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          query,
+          ...(companyIds && companyIds.length > 0 && { company_ids: companyIds })
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to execute intelligent query');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error executing intelligent query:', error);
       throw error;
     }
   }

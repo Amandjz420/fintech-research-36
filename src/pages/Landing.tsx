@@ -8,7 +8,13 @@ import CompanyCard from '../components/CompanyCard';
 import CompanyListItem from '../components/CompanyListItem';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
-import { Search, Grid3X3, List, BarChart3, TrendingUp, ArrowRight } from 'lucide-react';
+import { Search, Grid3X3, List, BarChart3, TrendingUp, ArrowRight, Sparkles, Send } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const Landing = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -18,6 +24,12 @@ const Landing = () => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
   const navigate = useNavigate();
+  
+  // Intelligent Query states
+  const [queryText, setQueryText] = useState('');
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>([]);
+  const [queryLoading, setQueryLoading] = useState(false);
+  const [queryResult, setQueryResult] = useState<string | null>(null);
 
   const fetchCompanies = async () => {
     try {
@@ -48,6 +60,38 @@ const Landing = () => {
       setFilteredCompanies(filtered);
     }
   }, [searchTerm, companies]);
+
+  const handleCompanyToggle = (companyId: number) => {
+    setSelectedCompanyIds(prev => 
+      prev.includes(companyId) 
+        ? prev.filter(id => id !== companyId)
+        : [...prev, companyId]
+    );
+  };
+
+  const handleIntelligentQuery = async () => {
+    if (!queryText.trim()) {
+      toast.error('Please enter a query');
+      return;
+    }
+
+    setQueryLoading(true);
+    setQueryResult(null);
+
+    try {
+      const result = await apiService.intelligentQuery(
+        queryText, 
+        selectedCompanyIds.length > 0 ? selectedCompanyIds : undefined
+      );
+      setQueryResult(result.result);
+      toast.success('Query executed successfully');
+    } catch (err) {
+      toast.error('Failed to execute query. Please try again.');
+      console.error('Error executing intelligent query:', err);
+    } finally {
+      setQueryLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -126,6 +170,87 @@ const Landing = () => {
             </div>
           </div>
           
+          {/* Intelligent Query Section */}
+          <Card className="max-w-5xl mx-auto mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                Intelligent Query
+              </CardTitle>
+              <CardDescription>
+                Ask questions about companies and get AI-powered insights from our database
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="query" className="mb-2 block">Your Question</Label>
+                <Textarea
+                  id="query"
+                  placeholder="e.g., What were the updates of PhonePe in September 2015?"
+                  value={queryText}
+                  onChange={(e) => setQueryText(e.target.value)}
+                  className="min-h-[100px]"
+                />
+              </div>
+              
+              <div>
+                <Label className="mb-2 block">Filter by Companies (Optional)</Label>
+                <ScrollArea className="h-48 border rounded-md p-4">
+                  <div className="space-y-3">
+                    {companies.map((company) => (
+                      <div key={company.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`company-${company.id}`}
+                          checked={selectedCompanyIds.includes(company.id)}
+                          onCheckedChange={() => handleCompanyToggle(company.id)}
+                        />
+                        <Label
+                          htmlFor={`company-${company.id}`}
+                          className="text-sm font-normal cursor-pointer"
+                        >
+                          {company.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                {selectedCompanyIds.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {selectedCompanyIds.length} {selectedCompanyIds.length === 1 ? 'company' : 'companies'} selected
+                  </p>
+                )}
+              </div>
+
+              <Button 
+                onClick={handleIntelligentQuery} 
+                disabled={queryLoading}
+                className="w-full"
+              >
+                {queryLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Ask Question
+                  </>
+                )}
+              </Button>
+
+              {queryResult && (
+                <div className="mt-4 p-4 bg-muted rounded-lg">
+                  <h4 className="font-semibold mb-2 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    Result:
+                  </h4>
+                  <p className="text-sm whitespace-pre-wrap">{queryResult}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div id="company-search" className="flex flex-col items-center gap-4 mb-8">
             <div className="max-w-md w-full">
               <div className="relative">
