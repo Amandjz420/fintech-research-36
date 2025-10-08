@@ -29,7 +29,17 @@ const Landing = () => {
   const [queryText, setQueryText] = useState('');
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<number[]>([]);
   const [queryLoading, setQueryLoading] = useState(false);
-  const [queryResult, setQueryResult] = useState<string | null>(null);
+  const [queryResult, setQueryResult] = useState<{
+    query: string;
+    answer: string;
+    tool_calls: Array<{
+      function: string;
+      arguments: Record<string, any>;
+      result: any;
+    }>;
+    iterations: number;
+    refined_query: Record<string, any>;
+  } | null>(null);
   const [companySearchTerm, setCompanySearchTerm] = useState('');
 
   const fetchCompanies = async () => {
@@ -89,7 +99,13 @@ const Landing = () => {
         queryText, 
         selectedCompanyIds
       );
-      setQueryResult(result.result);
+      
+      // Parse the result if it's a string, otherwise use it directly
+      const parsedResult = typeof result.result === 'string' 
+        ? JSON.parse(result.result) 
+        : result.result;
+      
+      setQueryResult(parsedResult);
       toast.success('Query executed successfully');
     } catch (err) {
       toast.error('Failed to execute query. Please try again.');
@@ -284,8 +300,8 @@ const Landing = () => {
               </Button>
 
               {(queryResult || queryLoading) && (
-                <>
-                  <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+                <div className="mt-4 space-y-4">
+                  <div className="p-4 bg-muted/50 rounded-lg border border-border">
                     <h4 className="font-semibold mb-2 text-sm">Query Details:</h4>
                     <div className="space-y-1 text-sm">
                       <p><span className="font-medium">Question:</span> {queryText}</p>
@@ -301,15 +317,73 @@ const Landing = () => {
                   </div>
                   
                   {queryResult && (
-                    <div className="mt-4 p-4 bg-muted rounded-lg">
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
-                        Result:
-                      </h4>
-                      <p className="text-sm whitespace-pre-wrap">{queryResult}</p>
-                    </div>
+                    <>
+                      <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2 text-primary">
+                          <Sparkles className="h-5 w-5" />
+                          Answer
+                        </h4>
+                        <div className="prose prose-sm max-w-none">
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{queryResult.answer}</p>
+                        </div>
+                      </div>
+
+                      {queryResult.refined_query && Object.keys(queryResult.refined_query).length > 0 && (
+                        <div className="p-4 bg-muted rounded-lg border border-border">
+                          <h4 className="font-semibold mb-2 text-sm">Refined Query Analysis</h4>
+                          <div className="space-y-1 text-sm">
+                            {queryResult.refined_query.company && (
+                              <p><span className="font-medium">Company:</span> {queryResult.refined_query.company}</p>
+                            )}
+                            {queryResult.refined_query.query_type && (
+                              <p><span className="font-medium">Query Type:</span> {queryResult.refined_query.query_type}</p>
+                            )}
+                            {queryResult.refined_query.keywords && queryResult.refined_query.keywords.length > 0 && (
+                              <p><span className="font-medium">Keywords:</span> {queryResult.refined_query.keywords.join(', ')}</p>
+                            )}
+                            {queryResult.refined_query.refined_query && (
+                              <p><span className="font-medium">Refined Query:</span> {queryResult.refined_query.refined_query}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {queryResult.tool_calls && queryResult.tool_calls.length > 0 && (
+                        <div className="p-4 bg-muted rounded-lg border border-border">
+                          <h4 className="font-semibold mb-3 text-sm">Tool Calls ({queryResult.tool_calls.length})</h4>
+                          <div className="space-y-3">
+                            {queryResult.tool_calls.map((tool, index) => (
+                              <div key={index} className="p-3 bg-background rounded border border-border">
+                                <p className="font-medium text-sm mb-2">Function: {tool.function}</p>
+                                {tool.arguments && Object.keys(tool.arguments).length > 0 && (
+                                  <div className="mb-2">
+                                    <p className="text-xs text-muted-foreground mb-1">Arguments:</p>
+                                    <pre className="text-xs bg-muted p-2 rounded overflow-x-auto">
+                                      {JSON.stringify(tool.arguments, null, 2)}
+                                    </pre>
+                                  </div>
+                                )}
+                                {tool.result && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-1">
+                                      Results: {Array.isArray(tool.result) ? `${tool.result.length} items found` : 'See details below'}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                        <p className="text-xs text-muted-foreground">
+                          Completed in <span className="font-medium">{queryResult.iterations}</span> iteration{queryResult.iterations !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    </>
                   )}
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
