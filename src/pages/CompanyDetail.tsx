@@ -25,7 +25,7 @@ const CompanyDetail = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [includeCitations, setIncludeCitations] = useState(true);
+  const [includeCitations, setIncludeCitations] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number | null>(2024);
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [quarterlyData, setQuarterlyData] = useState<CompanyQuarterlyData[]>([]);
