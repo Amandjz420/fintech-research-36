@@ -95,9 +95,14 @@ const Landing = () => {
     setQueryResult(null);
 
     try {
+      // Get company names from selected IDs
+      const selectedCompanyNames = companies
+        .filter(c => selectedCompanyIds.includes(c.id))
+        .map(c => c.name);
+      
       const result = await apiService.intelligentQuery(
         queryText, 
-        selectedCompanyIds
+        selectedCompanyNames
       );
       
       // Parse the result if it's a string, otherwise use it directly
@@ -304,15 +309,21 @@ const Landing = () => {
                   <div className="p-4 bg-muted/50 rounded-lg border border-border">
                     <h4 className="font-semibold mb-2 text-sm">Query Details:</h4>
                     <div className="space-y-1 text-sm">
-                      <p><span className="font-medium">Question:</span> {queryText}</p>
-                      <p><span className="font-medium">Companies:</span> {
+                      <p><span className="font-medium">Original Question:</span> {queryText}</p>
+                      <p><span className="font-medium">Selected Companies:</span> {
                         companies
                           .filter(c => selectedCompanyIds.includes(c.id))
                           .map(c => c.name)
                           .sort()
                           .join(', ')
                       }</p>
-                      <p><span className="font-medium">Company IDs:</span> [{selectedCompanyIds.join(', ')}]</p>
+                      <p><span className="font-medium">Enhanced Query:</span> {queryText} search for the companies {
+                        companies
+                          .filter(c => selectedCompanyIds.includes(c.id))
+                          .map(c => c.name)
+                          .sort()
+                          .join(', ')
+                      }</p>
                     </div>
                   </div>
                   

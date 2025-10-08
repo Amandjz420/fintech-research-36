@@ -469,17 +469,19 @@ export const apiService = {
     }
   },
 
-  async intelligentQuery(query: string, companyIds?: number[]): Promise<IntelligentQueryResponse> {
+  async intelligentQuery(query: string, companyNames: string[]): Promise<IntelligentQueryResponse> {
     try {
+      // Append company names to the query
+      const enhancedQuery = companyNames.length > 0 
+        ? `${query} search for the companies ${companyNames.join(', ')}`
+        : query;
+      
       const response = await fetch(`${API_BASE_URL}/api/intelligent-query/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          query,
-          ...(companyIds && companyIds.length > 0 && { company_ids: companyIds })
-        }),
+        body: JSON.stringify({ query: enhancedQuery }),
       });
       if (!response.ok) {
         throw new Error('Failed to execute intelligent query');
