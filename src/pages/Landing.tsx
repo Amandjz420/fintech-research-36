@@ -105,12 +105,8 @@ const Landing = () => {
         selectedCompanyNames
       );
       
-      // Parse the result if it's a string, otherwise use it directly
-      const parsedResult = typeof result.result === 'string' 
-        ? JSON.parse(result.result) 
-        : result.result;
-      
-      setQueryResult(parsedResult);
+      // The API returns the data directly, not nested under 'result'
+      setQueryResult(result as any);
       toast.success('Query executed successfully');
     } catch (err) {
       toast.error('Failed to execute query. Please try again.');
