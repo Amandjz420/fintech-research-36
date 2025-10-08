@@ -471,9 +471,9 @@ export const apiService = {
 
   async intelligentQuery(query: string, companyNames: string[]): Promise<IntelligentQueryResponse> {
     try {
-      // Append company names to the query
+      // Append company names to the query in the specified format
       const enhancedQuery = companyNames.length > 0 
-        ? `${query} search for the companies ${companyNames.join(', ')}`
+        ? `${query}?? search for the companies: ${companyNames.join(' and ')}`
         : query;
       
       const response = await fetch(`${API_BASE_URL}/api/intelligent-query/`, {

@@ -317,12 +317,12 @@ const Landing = () => {
                           .sort()
                           .join(', ')
                       }</p>
-                      <p><span className="font-medium">Enhanced Query:</span> {queryText} search for the companies {
+                      <p><span className="font-medium">Enhanced Query:</span> {queryText}?? search for the companies: {
                         companies
                           .filter(c => selectedCompanyIds.includes(c.id))
                           .map(c => c.name)
                           .sort()
-                          .join(', ')
+                          .join(' and ')
                       }</p>
                     </div>
                   </div>
