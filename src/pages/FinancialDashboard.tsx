@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Download, Search, Filter, RefreshCw, BarChart3, TrendingUp, Home, ArrowLeft } from 'lucide-react';
+import { Download, Search, Filter, BarChart3, TrendingUp, ArrowLeft, RefreshCw } from 'lucide-react';
 import { apiService, Company, GroupedQuarterlyData } from '@/services/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -20,6 +18,7 @@ import { CompanyView } from '@/components/dashboard/CompanyView';
 import { TimelineView } from '@/components/dashboard/TimelineView';
 import { InnovationHeatmap } from '@/components/dashboard/InnovationHeatmap';
 import { CategoryDistribution } from '@/components/dashboard/CategoryDistribution';
+import { useQuarterlyDataCache } from '@/hooks/useQuarterlyDataCache';
 
 interface FilterState {
   company_id?: number;
@@ -48,42 +47,58 @@ const FinancialDashboard = () => {
     queryFn: apiService.getCompanies,
   });
 
-  // Fetch quarterly data based on filters
+  // Use cached quarterly data with background refresh
   const { 
     data: quarterlyData = [], 
     isLoading: dataLoading, 
+    isRefreshing,
     error: dataError,
-    refetch 
-  } = useQuery({
-    queryKey: ['grouped-quarterly-data', filters],
-    queryFn: () => apiService.getGroupedQuarterlyData(filters),
-    enabled: true,
-  });
+    refetch,
+    lastUpdated
+  } = useQuarterlyDataCache(Object.keys(filters).length > 0 ? filters : undefined);
 
-  // Filter data based on search term
+  // Filter data based on search term and filters
   const filteredData = useMemo(() => {
-    if (!searchTerm) return quarterlyData;
+    let result = quarterlyData;
+
+    // Apply filters
+    if (filters.company_id) {
+      const companyName = companies.find(c => c.id === filters.company_id)?.name;
+      if (companyName) {
+        result = result.filter(item => item.company_name === companyName);
+      }
+    }
+    if (filters.year) {
+      result = result.filter(item => item.year === filters.year);
+    }
+    if (filters.quarter) {
+      result = result.filter(item => item.quarter.toLowerCase() === filters.quarter?.toLowerCase());
+    }
+
+    // Apply search term
+    if (searchTerm) {
+      result = result.filter(item => {
+        const searchLower = searchTerm.toLowerCase();
+        const companyMatch = item.company_name.toLowerCase().includes(searchLower);
+        
+        const contentMatch = [
+          item.products,
+          item.processes,
+          item.business_model,
+          item.regions,
+          item.launches,
+          item.security_updates,
+          item.api_updates,
+          item.account_aggregator_updates,
+          item.other
+        ].some(content => content && content.toLowerCase().includes(searchLower));
+        
+        return companyMatch || contentMatch;
+      });
+    }
     
-    return quarterlyData.filter(item => {
-      const searchLower = searchTerm.toLowerCase();
-      const companyMatch = item.company_name.toLowerCase().includes(searchLower);
-      
-      // Search in all content fields (now strings)
-      const contentMatch = [
-        item.products,
-        item.processes,
-        item.business_model,
-        item.regions,
-        item.launches,
-        item.security_updates,
-        item.api_updates,
-        item.account_aggregator_updates,
-        item.other
-      ].some(content => content && content.toLowerCase().includes(searchLower));
-      
-      return companyMatch || contentMatch;
-    });
-  }, [quarterlyData, searchTerm]);
+    return result;
+  }, [quarterlyData, searchTerm, filters, companies]);
 
   // Export functions
   const exportToCSV = (data: GroupedQuarterlyData[], filename: string) => {
@@ -160,11 +175,12 @@ const FinancialDashboard = () => {
 
   const hasActiveFilters = Object.keys(filters).length > 0 || searchTerm;
 
-  if (companiesLoading || dataLoading) {
+  // Show loading spinner only on initial load without cached data
+  if (companiesLoading || (dataLoading && quarterlyData.length === 0)) {
     return <LoadingSpinner />;
   }
 
-  if (dataError) {
+  if (dataError && quarterlyData.length === 0) {
     return <ErrorMessage message="Failed to load dashboard data" onRetry={() => refetch()} />;
   }
 
@@ -195,32 +211,43 @@ const FinancialDashboard = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">Financial Innovation Dashboard</h1>
-              <p className="text-muted-foreground">
-                Track and analyze fintech innovation across companies and quarters
-              </p>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span>Track and analyze fintech innovation across companies and quarters</span>
+                {isRefreshing && (
+                  <Badge variant="outline" className="animate-pulse gap-1">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Refreshing...
+                  </Badge>
+                )}
+                {lastUpdated && !isRefreshing && (
+                  <Badge variant="secondary" className="text-xs">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
           
           <div className="flex items-center gap-2">
-          <Button 
-            onClick={() => exportToCSV(quarterlyData, 'all-quarterly-data')}
-            className="gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Export All Data
-          </Button>
-          
-          {hasActiveFilters && (
             <Button 
-              variant="outline"
-              onClick={() => exportToCSV(filteredData, 'filtered-quarterly-data')}
+              onClick={() => exportToCSV(quarterlyData, 'all-quarterly-data')}
               className="gap-2"
             >
               <Download className="h-4 w-4" />
-              Export Filtered
+              Export All Data
             </Button>
-          )}
+            
+            {hasActiveFilters && (
+              <Button 
+                variant="outline"
+                onClick={() => exportToCSV(filteredData, 'filtered-quarterly-data')}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export Filtered
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
