@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronRight, Download } from 'lucide-react';
+import { ChevronDown, ChevronRight, Download, ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface DataTableViewProps {
   data: GroupedQuarterlyData[];
   onExport: (data: GroupedQuarterlyData[], filename: string) => void;
 }
 
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 250];
+
 export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) => {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
 
   const toggleRow = (key: string) => {
     const newExpanded = new Set(expandedRows);
@@ -31,9 +36,10 @@ export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) 
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+    setCurrentPage(1); // Reset to first page on sort
   };
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     if (!sortConfig) return data;
 
     return [...data].sort((a, b) => {
@@ -63,6 +69,23 @@ export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) 
     });
   }, [data, sortConfig]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedData = useMemo(() => sortedData.slice(startIndex, endIndex), [sortedData, startIndex, endIndex]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+    setExpandedRows(new Set()); // Clear expanded rows on page change
+  };
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(Number(size));
+    setCurrentPage(1);
+    setExpandedRows(new Set());
+  };
+
   const getInnovationCount = (item: GroupedQuarterlyData) => {
     const categories = [
       item.products,
@@ -78,7 +101,6 @@ export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) 
 
     return categories.reduce((total, category) => {
       if (!category || !category.trim()) return total;
-      // Count numbered lines
       return total + category.split('\n').filter(line => line.trim()).length;
     }, 0);
   };
@@ -106,6 +128,63 @@ export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) 
 
   return (
     <div className="space-y-4">
+      {/* Pagination Controls - Top */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Showing</span>
+          <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="w-20 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map(size => (
+                <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>of {sortedData.length.toLocaleString()} records</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm px-2">
+            Page {currentPage} of {totalPages.toLocaleString()}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Table */}
       <div className="overflow-auto">
         <Table>
           <TableHeader>
@@ -134,7 +213,7 @@ export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedData.map((item, index) => {
+            {paginatedData.map((item) => {
               const rowKey = `${item.company_name}-${item.year}-${item.quarter}`;
               const isExpanded = expandedRows.has(rowKey);
               const innovationCount = getInnovationCount(item);
@@ -208,6 +287,33 @@ export const DataTableView: React.FC<DataTableViewProps> = ({ data, onExport }) 
       {sortedData.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           No data found matching the current filters.
+        </div>
+      )}
+
+      {/* Pagination Controls - Bottom */}
+      {sortedData.length > 0 && (
+        <div className="flex items-center justify-between pt-4 border-t text-sm text-muted-foreground">
+          <span>
+            Showing {startIndex + 1} to {Math.min(endIndex, sortedData.length)} of {sortedData.length.toLocaleString()} records
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>

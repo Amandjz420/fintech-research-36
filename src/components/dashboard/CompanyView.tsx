@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Download, Building2, Calendar, TrendingUp } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Download, Building2, Calendar, TrendingUp, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
 
 interface CompanyViewProps {
@@ -11,9 +12,14 @@ interface CompanyViewProps {
   onExport: (data: GroupedQuarterlyData[], filename: string) => void;
 }
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+
 export const CompanyView: React.FC<CompanyViewProps> = ({ data, onExport }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   // Group data by company
-  const groupedData = React.useMemo(() => {
+  const groupedData = useMemo(() => {
     const groups = new Map<string, GroupedQuarterlyData[]>();
     
     data.forEach(item => {
@@ -32,8 +38,25 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, onExport }) => {
       });
     });
 
-    return groups;
+    return Array.from(groups.entries()).sort((a, b) => a[0].localeCompare(b[0]));
   }, [data]);
+
+  // Pagination
+  const totalPages = Math.ceil(groupedData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedCompanies = useMemo(() => 
+    groupedData.slice(startIndex, startIndex + pageSize), 
+    [groupedData, startIndex, pageSize]
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(Number(size));
+    setCurrentPage(1);
+  };
 
   const getInnovationCount = (items: GroupedQuarterlyData[]) => {
     return items.reduce((total, item) => {
@@ -98,7 +121,63 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, onExport }) => {
 
   return (
     <div className="space-y-6">
-      {Array.from(groupedData.entries()).map(([companyName, quarters]) => {
+      {/* Pagination Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Showing</span>
+          <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="w-20 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map(size => (
+                <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>of {groupedData.length.toLocaleString()} companies</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm px-2">
+            Page {currentPage} of {totalPages.toLocaleString()}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {paginatedCompanies.map(([companyName, quarters]) => {
         const innovationCount = getInnovationCount(quarters);
 
         return (
@@ -189,10 +268,37 @@ export const CompanyView: React.FC<CompanyViewProps> = ({ data, onExport }) => {
         );
       })}
 
-      {groupedData.size === 0 && (
+      {groupedData.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>No company data found matching the current filters.</p>
+        </div>
+      )}
+
+      {/* Bottom Pagination */}
+      {groupedData.length > 0 && (
+        <div className="flex items-center justify-between pt-4 border-t text-sm text-muted-foreground">
+          <span>
+            Showing {startIndex + 1} to {Math.min(startIndex + pageSize, groupedData.length)} of {groupedData.length.toLocaleString()} companies
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>

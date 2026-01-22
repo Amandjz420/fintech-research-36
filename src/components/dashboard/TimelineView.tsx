@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Download, Clock, Building2, Calendar } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Download, Clock, Building2, Calendar, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { GroupedQuarterlyData } from '@/services/api';
 import { CATEGORY_COLORS } from './InnovationHeatmap';
 
@@ -12,9 +13,14 @@ interface TimelineViewProps {
   onExport: (data: GroupedQuarterlyData[], filename: string) => void;
 }
 
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
+
 export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Sort data chronologically (newest first)
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     return [...data].sort((a, b) => {
       if (a.year !== b.year) return b.year - a.year;
       const quarterOrder = { q4: 4, q3: 3, q2: 2, q1: 1 };
@@ -23,7 +29,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
   }, [data]);
 
   // Group by year and quarter for timeline structure
-  const timelineData = React.useMemo(() => {
+  const timelineData = useMemo(() => {
     const timeline = new Map<string, GroupedQuarterlyData[]>();
     
     sortedData.forEach(item => {
@@ -43,6 +49,23 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
       };
     });
   }, [sortedData]);
+
+  // Pagination
+  const totalPages = Math.ceil(timelineData.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedTimeline = useMemo(() => 
+    timelineData.slice(startIndex, startIndex + pageSize),
+    [timelineData, startIndex, pageSize]
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handlePageSizeChange = (size: string) => {
+    setPageSize(Number(size));
+    setCurrentPage(1);
+  };
 
   const getInnovationCount = (item: GroupedQuarterlyData) => {
     const categories = [
@@ -118,15 +141,67 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-        <Clock className="h-4 w-4" />
-        <span>Showing {sortedData.length} records in chronological order</span>
+      {/* Pagination Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span>Showing</span>
+          <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+            <SelectTrigger className="w-20 h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZE_OPTIONS.map(size => (
+                <SelectItem key={size} value={size.toString()}>{size}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span>of {timelineData.length.toLocaleString()} periods ({sortedData.length.toLocaleString()} records)</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm px-2">
+            Page {currentPage} of {totalPages.toLocaleString()}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {timelineData.map((period, periodIndex) => (
+      {paginatedTimeline.map((period, periodIndex) => (
         <div key={`${period.year}-${period.quarter}`} className="relative">
           {/* Timeline line */}
-          {periodIndex < timelineData.length - 1 && (
+          {periodIndex < paginatedTimeline.length - 1 && (
             <div className="absolute left-6 top-16 bottom-0 w-0.5 bg-border" />
           )}
           
@@ -156,9 +231,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
             </div>
           </div>
 
-          {/* Company updates for this period */}
+          {/* Company updates for this period - limit to first 10 for performance */}
           <div className="ml-16 space-y-4">
-            {period.items.map((item, itemIndex) => {
+            {period.items.slice(0, 10).map((item) => {
               const innovationCount = getInnovationCount(item);
 
               return (
@@ -193,9 +268,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
                 </Card>
               );
             })}
+            {period.items.length > 10 && (
+              <div className="text-center py-4 text-sm text-muted-foreground">
+                +{period.items.length - 10} more companies in this period
+              </div>
+            )}
           </div>
 
-          {periodIndex < timelineData.length - 1 && (
+          {periodIndex < paginatedTimeline.length - 1 && (
             <Separator className="my-8 ml-16" />
           )}
         </div>
@@ -205,6 +285,33 @@ export const TimelineView: React.FC<TimelineViewProps> = ({ data, onExport }) =>
         <div className="text-center py-12 text-muted-foreground">
           <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>No timeline data found matching the current filters.</p>
+        </div>
+      )}
+
+      {/* Bottom Pagination */}
+      {timelineData.length > 0 && (
+        <div className="flex items-center justify-between pt-4 border-t text-sm text-muted-foreground">
+          <span>
+            Showing periods {startIndex + 1} to {Math.min(startIndex + pageSize, timelineData.length)} of {timelineData.length.toLocaleString()}
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>
