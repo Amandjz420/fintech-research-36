@@ -56,13 +56,45 @@ export const useQuarterlyDataCache = (filters?: {
     return null;
   }, [cacheKey, timestampKey]);
 
-  // Save data to cache
+  // Save data to cache with quota handling
   const saveToCache = useCallback((newData: GroupedQuarterlyData[]) => {
     try {
       const timestamp = Date.now();
-      localStorage.setItem(cacheKey, JSON.stringify(newData));
-      localStorage.setItem(timestampKey, timestamp.toString());
-      setLastUpdated(new Date(timestamp));
+      const dataString = JSON.stringify(newData);
+      
+      // Check estimated size (rough approximation: 2 bytes per char)
+      const estimatedSize = dataString.length * 2;
+      const MAX_CACHE_SIZE = 4 * 1024 * 1024; // 4MB limit to stay under localStorage quota
+      
+      if (estimatedSize > MAX_CACHE_SIZE) {
+        console.warn(`Data too large for cache (${(estimatedSize / 1024 / 1024).toFixed(2)}MB). Skipping cache.`);
+        setLastUpdated(new Date(timestamp));
+        return;
+      }
+      
+      // Clear old cache entries if needed
+      try {
+        localStorage.setItem(cacheKey, dataString);
+        localStorage.setItem(timestampKey, timestamp.toString());
+        setLastUpdated(new Date(timestamp));
+        console.log(`Cached ${newData.length} records successfully`);
+      } catch (quotaError) {
+        console.warn('LocalStorage quota exceeded, clearing old caches...');
+        // Clear all quarterly data caches
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('quarterly_data_cache')) {
+            localStorage.removeItem(key);
+          }
+        });
+        // Try again
+        try {
+          localStorage.setItem(cacheKey, dataString);
+          localStorage.setItem(timestampKey, timestamp.toString());
+          setLastUpdated(new Date(timestamp));
+        } catch (e) {
+          console.error('Still unable to cache data after clearing:', e);
+        }
+      }
     } catch (e) {
       console.error('Error saving to cache:', e);
     }
