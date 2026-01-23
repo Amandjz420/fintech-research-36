@@ -27,6 +27,9 @@ interface FilterState {
   searchTerm?: string;
 }
 
+// Limit records to prevent stack overflow with large datasets
+const MAX_RECORDS = 5000;
+
 const FinancialDashboard = () => {
   const [filters, setFilters] = useState<FilterState>({});
   const [activeView, setActiveView] = useState<'table' | 'company' | 'timeline'>('table');
@@ -57,9 +60,25 @@ const FinancialDashboard = () => {
     lastUpdated
   } = useQuarterlyDataCache(Object.keys(filters).length > 0 ? filters : undefined);
 
+  // Limit data for performance - 52k records is too many
+  const limitedData = useMemo(() => {
+    if (quarterlyData.length <= MAX_RECORDS) return quarterlyData;
+    
+    // Sort by year/quarter (most recent first) and take first MAX_RECORDS
+    const sorted = [...quarterlyData].sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      const quarterOrder = { q4: 4, q3: 3, q2: 2, q1: 1 };
+      return (quarterOrder[b.quarter as keyof typeof quarterOrder] || 0) - 
+             (quarterOrder[a.quarter as keyof typeof quarterOrder] || 0);
+    });
+    return sorted.slice(0, MAX_RECORDS);
+  }, [quarterlyData]);
+
+  const isDataLimited = quarterlyData.length > MAX_RECORDS;
+
   // Filter data based on search term and filters
   const filteredData = useMemo(() => {
-    let result = quarterlyData;
+    let result = limitedData;
 
     // Apply filters
     if (filters.company_id) {
@@ -98,7 +117,7 @@ const FinancialDashboard = () => {
     }
     
     return result;
-  }, [quarterlyData, searchTerm, filters, companies]);
+  }, [limitedData, searchTerm, filters, companies]);
 
   // Export functions
   const exportToCSV = (data: GroupedQuarterlyData[], filename: string) => {
@@ -251,6 +270,21 @@ const FinancialDashboard = () => {
         </div>
       </div>
 
+      {/* Data limit warning */}
+      {isDataLimited && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 flex items-center gap-3">
+          <div className="text-amber-600">⚠️</div>
+          <div>
+            <p className="font-medium text-amber-700 dark:text-amber-400">
+              Showing most recent {MAX_RECORDS.toLocaleString()} of {quarterlyData.length.toLocaleString()} records
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Use filters to narrow down data. Export includes all records.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -260,6 +294,9 @@ const FinancialDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredData.length}</div>
+            {isDataLimited && (
+              <p className="text-xs text-muted-foreground">of {quarterlyData.length.toLocaleString()} total</p>
+            )}
           </CardContent>
         </Card>
         
