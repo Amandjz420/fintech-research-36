@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Download, Search, Filter, BarChart3, TrendingUp, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Download, Search, Filter, BarChart3, TrendingUp, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
 import { apiService, Company, GroupedQuarterlyData } from '@/services/api';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import ErrorMessage from '@/components/ErrorMessage';
@@ -19,6 +19,7 @@ import { TimelineView } from '@/components/dashboard/TimelineView';
 import { InnovationHeatmap } from '@/components/dashboard/InnovationHeatmap';
 import { CategoryDistribution } from '@/components/dashboard/CategoryDistribution';
 import { useQuarterlyDataCache } from '@/hooks/useQuarterlyDataCache';
+import * as XLSX from 'xlsx';
 
 interface FilterState {
   company_id?: number;
@@ -34,9 +35,21 @@ const FinancialDashboard = () => {
   const [filters, setFilters] = useState<FilterState>({});
   const [activeView, setActiveView] = useState<'table' | 'company' | 'timeline'>('table');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportElapsedTime, setExportElapsedTime] = useState(0);
+  const exportTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (exportTimerRef.current) {
+        clearInterval(exportTimerRef.current);
+      }
+    };
+  }, []);
 
   // Check if admin mode is enabled via query parameter
   const isAdminMode = useMemo(() => {
@@ -119,8 +132,116 @@ const FinancialDashboard = () => {
     return result;
   }, [limitedData, searchTerm, filters, companies]);
 
-  // Export functions
-  const exportToCSV = (data: GroupedQuarterlyData[], filename: string) => {
+  // Format category data for export
+  const formatCategoryData = (categoryData: any): string => {
+    if (!categoryData) return '';
+    
+    if (typeof categoryData === 'string') {
+      return categoryData;
+    }
+    
+    if (Array.isArray(categoryData)) {
+      return categoryData
+        .map((item, index) => {
+          const content = typeof item === 'object' && item.content ? item.content : item;
+          return `${index + 1}. ${content}`;
+        })
+        .join('\n');
+    }
+    
+    return categoryData.toString();
+  };
+
+  // Convert data to worksheet format
+  const dataToWorksheetRows = (data: GroupedQuarterlyData[]) => {
+    return data.map(item => ({
+      'Company_name': item.company_name,
+      'Year': item.year,
+      'Quarter': item.quarter.toUpperCase(),
+      'Products': formatCategoryData(item.products),
+      'Processes': formatCategoryData(item.processes),
+      'Business_Model': formatCategoryData(item.business_model),
+      'Regions': formatCategoryData(item.regions),
+      'Launches': formatCategoryData(item.launches),
+      'Security_Updates': formatCategoryData(item.security_updates),
+      'API_Updates': formatCategoryData(item.api_updates),
+      'Account_Aggregator_Updates': formatCategoryData(item.account_aggregator_updates),
+      'Other': formatCategoryData(item.other)
+    }));
+  };
+
+  // Export All Data - fetches fresh data from API
+  const exportAllDataToXLSX = async () => {
+    setIsExporting(true);
+    setExportElapsedTime(0);
+    
+    // Start elapsed time counter
+    exportTimerRef.current = setInterval(() => {
+      setExportElapsedTime(prev => prev + 1);
+    }, 1000);
+
+    toast({
+      title: "Export Started",
+      description: "Fetching all 52,000+ records from the server. This may take 2-3 minutes...",
+    });
+
+    try {
+      // Fetch fresh data from API
+      console.log('Fetching fresh data for export...');
+      const freshData = await apiService.getGroupedQuarterlyData();
+      console.log(`Fetched ${freshData.length} records for export`);
+
+      // Create workbook and worksheet
+      const worksheetData = dataToWorksheetRows(freshData);
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      
+      // Set column widths for better readability
+      worksheet['!cols'] = [
+        { wch: 25 }, // Company_name
+        { wch: 8 },  // Year
+        { wch: 10 }, // Quarter
+        { wch: 50 }, // Products
+        { wch: 50 }, // Processes
+        { wch: 50 }, // Business_Model
+        { wch: 30 }, // Regions
+        { wch: 50 }, // Launches
+        { wch: 50 }, // Security_Updates
+        { wch: 50 }, // API_Updates
+        { wch: 50 }, // Account_Aggregator_Updates
+        { wch: 50 }, // Other
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Quarterly Data');
+
+      // Generate and download file
+      const timestamp = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `all-quarterly-data-${timestamp}.xlsx`);
+
+      toast({
+        title: "Export Complete!",
+        description: `Successfully exported ${freshData.length.toLocaleString()} records to Excel.`,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to fetch data for export. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      // Stop timer
+      if (exportTimerRef.current) {
+        clearInterval(exportTimerRef.current);
+        exportTimerRef.current = null;
+      }
+      setIsExporting(false);
+      setExportElapsedTime(0);
+    }
+  };
+
+  // Export filtered data to CSV (quick export from cached data)
+  const exportFilteredToCSV = (data: GroupedQuarterlyData[], filename: string) => {
     const headers = [
       'Company_name', 'year', 'quarter', 'products', 'processes', 'business_model',
       'regions', 'launches', 'security_updates', 'api_updates', 'account_aggregator_updates', 'other'
@@ -128,27 +249,6 @@ const FinancialDashboard = () => {
     const rows = [headers];
 
     data.forEach(item => {
-      const formatCategoryData = (categoryData: any) => {
-        if (!categoryData) return '';
-        
-        // If it's already a string, return as is
-        if (typeof categoryData === 'string') {
-          return categoryData;
-        }
-        
-        // If it's an array with content/sources structure
-        if (Array.isArray(categoryData)) {
-          return categoryData
-            .map((item, index) => {
-              const content = typeof item === 'object' && item.content ? item.content : item;
-              return `${index + 1}. ${content}`;
-            })
-            .join('\n');
-        }
-        
-        return categoryData.toString();
-      };
-
       const row = [
         item.company_name,
         item.year.toString(),
@@ -163,7 +263,6 @@ const FinancialDashboard = () => {
         formatCategoryData(item.account_aggregator_updates),
         formatCategoryData(item.other)
       ];
-
       rows.push(row);
     });
 
@@ -249,24 +348,65 @@ const FinancialDashboard = () => {
           
           <div className="flex items-center gap-2">
             <Button 
-              onClick={() => exportToCSV(quarterlyData, 'all-quarterly-data')}
+              onClick={exportAllDataToXLSX}
+              disabled={isExporting}
               className="gap-2"
             >
-              <Download className="h-4 w-4" />
-              Export All Data
+              {isExporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Exporting... {Math.floor(exportElapsedTime / 60)}:{(exportElapsedTime % 60).toString().padStart(2, '0')}</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Export All Data (XLSX)
+                </>
+              )}
             </Button>
             
             {hasActiveFilters && (
               <Button 
                 variant="outline"
-                onClick={() => exportToCSV(filteredData, 'filtered-quarterly-data')}
+                onClick={() => exportFilteredToCSV(filteredData, 'filtered-quarterly-data')}
+                disabled={isExporting}
                 className="gap-2"
               >
                 <Download className="h-4 w-4" />
-                Export Filtered
+                Export Filtered (CSV)
               </Button>
             )}
           </div>
+          
+          {/* Export progress overlay */}
+          {isExporting && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+              <Card className="w-96 shadow-lg">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center gap-4 text-center">
+                    <div className="relative">
+                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold">{Math.floor(exportElapsedTime / 60)}:{(exportElapsedTime % 60).toString().padStart(2, '0')}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">Exporting All Data</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Fetching 52,000+ records from server...
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        This typically takes 2-3 minutes. Please don't close this page.
+                      </p>
+                    </div>
+                    <Badge variant="secondary" className="animate-pulse">
+                      Request in progress • {exportElapsedTime}s elapsed
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 
@@ -404,21 +544,21 @@ const FinancialDashboard = () => {
             <TabsContent value="table">
               <DataTableView 
                 data={filteredData} 
-                onExport={(data, filename) => exportToCSV(data, filename)}
+                onExport={(data, filename) => exportFilteredToCSV(data, filename)}
               />
             </TabsContent>
             
             <TabsContent value="company">
               <CompanyView 
                 data={filteredData} 
-                onExport={(data, filename) => exportToCSV(data, filename)}
+                onExport={(data, filename) => exportFilteredToCSV(data, filename)}
               />
             </TabsContent>
             
             <TabsContent value="timeline">
               <TimelineView 
                 data={filteredData} 
-                onExport={(data, filename) => exportToCSV(data, filename)}
+                onExport={(data, filename) => exportFilteredToCSV(data, filename)}
               />
             </TabsContent>
           </Tabs>
